@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "panomoche"
-version = "0.1.0"
+version = "0.2.0"
 description = "Automatic sorting of street-level pictures for Panoramax: keeps clean pictures, excludes unusable ones"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.14"
 dependencies = [
     "torch>=2.2",
     "timm>=1.0.20",  # first release shipping the DINOv3 weights
@@ -22,12 +22,25 @@ dependencies = [
 
 [project.optional-dependencies]
 serve = ["fastapi", "uvicorn", "python-multipart"]
-iqa = ["pyiqa", "psutil"]  # off-the-shelf quality models, see panomoche/iqa.py
+# off-the-shelf quality models, see panomoche/iqa.py; pyiqa loads openai-clip, which still imports pkg_resources (gone in setuptools 81)
+iqa = ["pyiqa", "psutil", "torchvision", "setuptools<81"]
 ads = ["onnxruntime>=1.20,<2", "tokenizers>=0.21,<1"]  # advertisement check (SigLIP 2); also needs Tesseract OCR
-dev = ["pytest", "httpx", "fastapi", "python-multipart", "ruff", "vulture"]
+
+[dependency-groups]
+dev = ["pytest", "httpx", "fastapi", "python-multipart", "ruff", "vulture"]  # installed by default by `uv sync`
 
 [project.scripts]
 panomoche = "panomoche.cli:main"
+
+# The project is CPU-only: take PyTorch from its CPU wheel index (no 3 GB of CUDA libraries).
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [tool.setuptools.package-data]
 panomoche = ["web/*.html", "waviness/web/*", "advertising/web/*", "advertising/policy.json"]
@@ -40,7 +53,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py314"
 extend-exclude = ["data", "models", "examples", "docs"]
 
 [tool.ruff.lint]

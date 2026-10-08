@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>__TITLE__</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #f5f5f3; --surface: #ffffff; --surface-2: #efefec; --text: #1c1c1a; --muted: #6a6a64;
+  --border: #e0e0db; --accent: #2d5bd7; --bad: #c2410c; --bad-bg: #fbe9df; --ok: #15803d; --ok-bg: #e3f3e8;
+  --shadow: 0 1px 2px rgb(0 0 0 / 6%);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #151514; --surface: #1f1f1d; --surface-2: #2a2a27; --text: #ecece8; --muted: #9b9b94;
+    --border: #34342f; --accent: #8aa8ff; --bad: #fb923c; --bad-bg: #3a2416; --ok: #4ade80; --ok-bg: #16301f;
+    --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { padding: 20px 16px 12px; max-width: 1400px; margin: 0 auto; }
+h1 { font-size: 20px; margin: 0 0 4px; font-weight: 650; }
+.sub { color: var(--muted); margin: 0; }
+.sub a { color: var(--accent); }
+.controls { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(6px); border-bottom: 1px solid var(--border); }
+.controls-inner { max-width: 1400px; margin: 0 auto; padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 999px;
+  padding: 4px 11px; font: inherit; font-size: 13px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+.chip .n { color: var(--muted); margin-left: 4px; font-variant-numeric: tabular-nums; }
+.chip[aria-pressed="true"] .n { color: inherit; opacity: .7; }
+select { font: inherit; font-size: 13px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); max-width: 100%; }
+.spacer { flex: 1; }
+main { max-width: 1400px; margin: 0 auto; padding: 12px 16px 40px; }
+details.seqs { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; box-shadow: var(--shadow); }
+details.seqs summary { cursor: pointer; padding: 10px 14px; font-weight: 600; }
+.table-wrap { overflow-x: auto; }
+table.seq { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+table.seq th, table.seq td { text-align: left; padding: 6px 14px; border-top: 1px solid var(--border); white-space: nowrap; }
+table.seq th { color: var(--muted); font-weight: 500; }
+table.seq td.num, table.seq th.num { text-align: right; }
+table.seq tbody tr { cursor: pointer; }
+table.seq tbody tr:hover { background: var(--surface-2); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; box-shadow: var(--shadow);
+  display: flex; flex-direction: column; }
+.card.excluded { border-color: color-mix(in srgb, var(--bad) 55%, var(--border)); }
+.card.excluded .thumb img { opacity: .45; filter: grayscale(.6); }
+.tag.muted { background: var(--surface-2); color: var(--muted); }
+.thumb { all: unset; cursor: zoom-in; display: block; aspect-ratio: 3 / 2; background: var(--surface-2); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.meta { padding: 9px 11px 11px; display: grid; gap: 6px; font-size: 12.5px; }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag { padding: 1px 7px; border-radius: 5px; font-size: 12px; background: var(--bad-bg); color: var(--bad); }
+.tag.ok { background: var(--ok-bg); color: var(--ok); }
+.score { display: flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
+.score b { font-size: 15px; min-width: 3.2em; }
+.bar { flex: 1; height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--ok); }
+.excluded .bar i { background: var(--bad); }
+.line { color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 10px; font-variant-numeric: tabular-nums; }
+.line a { color: var(--accent); text-decoration: none; }
+.line a:hover { text-decoration: underline; }
+.empty { color: var(--muted); padding: 40px 0; text-align: center; }
+.label-row { display: flex; gap: 6px; align-items: center; }
+.lbl { flex: 1; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 7px;
+  padding: 4px 8px; font: inherit; font-size: 12.5px; cursor: pointer; }
+.lbl:hover { background: var(--surface-2); }
+.lbl.blurred[aria-pressed="true"] { background: var(--bad); border-color: var(--bad); color: #fff; }
+.lbl.ok[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: #fff; }
+.lbl-other { font-size: 12px; color: var(--muted); }
+.card.labelled { outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent); outline-offset: -1px; }
+.toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--bad); color: #fff;
+  padding: 8px 14px; border-radius: 8px; font-size: 13px; z-index: 20; }
+.lb-bar .lbl { flex: none; background: rgb(255 255 255 / 12%); border-color: transparent; color: #fff; padding: 4px 12px; }
+.lb-bar .lbl kbd { font: inherit; opacity: .6; margin-left: 4px; }
+dialog { border: 0; padding: 0; background: transparent; max-width: 100vw; max-height: 100vh; width: 100vw; height: 100vh; }
+dialog::backdrop { background: rgb(0 0 0 / 88%); }
+.lb { width: 100%; height: 100%; display: grid; grid-template-rows: 1fr auto; color: #f2f2f2; }
+.lb-img { min-height: 0; display: flex; align-items: center; justify-content: center; padding: 12px 56px 0; }
+.lb-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.lb-bar { padding: 10px 16px 14px; display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; font-size: 13px; font-variant-numeric: tabular-nums; }
+.lb-bar .tag { background: rgb(251 146 60 / 20%); color: #fdba74; }
+.lb-bar .tag.ok { background: rgb(74 222 128 / 18%); color: #86efac; }
+.lb-bar a { color: #a5b8ff; }
+.lb-nav { position: fixed; top: 50%; transform: translateY(-50%); background: rgb(255 255 255 / 12%); color: #fff;
+  border: 0; width: 40px; height: 64px; border-radius: 8px; font-size: 22px; cursor: pointer; }
+.lb-nav:hover { background: rgb(255 255 255 / 22%); }
+.lb-prev { left: 8px; } .lb-next { right: 8px; }
+.lb-close { position: fixed; top: 10px; right: 12px; background: rgb(255 255 255 / 12%); color: #fff; border: 0;
+  border-radius: 8px; padding: 6px 12px; font: inherit; cursor: pointer; }
+@media (max-width: 600px) {
+  .controls { position: static; backdrop-filter: none; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+  .lb-img { padding: 8px 8px 0; }
+  .lb-nav { top: auto; bottom: 70px; transform: none; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title"></h1>
+  <p class="sub" id="summary"></p>
+</header>
+<div class="controls"><div class="controls-inner">
+  <div id="filters" style="display:contents"></div>
+  <span class="spacer"></span>
+  <select id="seq" aria-label="Sequence"></select>
+  <select id="sort" aria-label="Sort">
+    <option value="worst">Excluded first, worst score first</option>
+    <option value="sequence">Sequence order</option>
+    <option value="best">Best score first</option>
+  </select>
+</div></div>
+<main>
+  <details class="seqs" id="seqs-panel" hidden>
+    <summary>Sequences, worst median score first</summary>
+    <div class="table-wrap"><table class="seq">
+      <thead><tr><th>Sequence</th><th>Camera</th><th class="num">Pictures</th><th class="num">Median score</th><th class="num">Excluded</th></tr></thead>
+      <tbody id="seq-rows"></tbody>
+    </table></div>
+  </details>
+  <div class="grid" id="grid"></div>
+  <p class="empty" id="empty" hidden>No picture matches this filter.</p>
+</main>
+<dialog id="lb" aria-label="Picture viewer">
+  <div class="lb">
+    <div class="lb-img"><img id="lb-img" alt=""></div>
+    <div class="lb-bar" id="lb-bar"></div>
+  </div>
+  <button class="lb-nav lb-prev" id="lb-prev" aria-label="Previous picture">‹</button>
+  <button class="lb-nav lb-next" id="lb-next" aria-label="Next picture">›</button>
+  <button class="lb-close" id="lb-close">Close · Esc</button>
+</dialog>
+<script id="data" type="application/json">__DATA__</script>
+<script>
+const DATA = JSON.parse(document.getElementById("data").textContent);
+const pics = DATA.pictures;
+const state = { filter: "all", seq: "", sort: "worst" };
+let view = [];
+let lbIndex = -1;
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const fmt = (x, d = 2) => (x == null ? "–" : Number(x).toFixed(d));
+const shortId = id => String(id).slice(0, 8);
+
+document.title = DATA.title;
+document.getElementById("title").textContent = DATA.title;
+const excludedCount = pics.filter(p => p.excluded).length;
+const LABELS_URL = DATA.labels_url;          // null on a static report: no buttons
+const labels = DATA.labels || {};
+function labelSummary() {
+  if (!LABELS_URL) return "";
+  const n = k => pics.filter(p => labels[p.id] === k).length;
+  return ` · <span id="label-count">labelled: ${n("blurred")} blurred, ${n("ok")} OK</span>`;
+}
+document.getElementById("summary").innerHTML =
+  `${pics.length} pictures · ${pics.length - excludedCount} kept · ${excludedCount} excluded` + labelSummary() +
+  (DATA.sequences.length ? ` · ${DATA.sequences.length} sequences` : "") +
+  (DATA.upload_url ? ` · <a href="${esc(DATA.upload_url)}">Test your own pictures</a>` : "") +
+  ` · click a picture to see it full size, ← → to browse` +
+  (LABELS_URL ? `, <b>B</b> blurred / <b>O</b> OK to label it and go to the next one` : "");
+
+// Filter chips: all, kept, excluded, then one per exclusion reason.
+const reasonCounts = {};
+pics.forEach(p => { if (p.excluded) reasonCounts[p.excluded] = (reasonCounts[p.excluded] || 0) + 1; });
+const chips = [["all", "All", pics.length], ["kept", "Kept", pics.length - excludedCount], ["excluded", "Excluded", excludedCount],
+  ...Object.entries(reasonCounts).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, k.replace(/_/g, " "), n])];
+if (LABELS_URL) chips.push(["unlabelled", "Not labelled yet", null], ["labelled", "Labelled", null]);
+const filtersEl = document.getElementById("filters");
+chips.forEach(([key, label, n]) => {
+  const b = document.createElement("button");
+  b.className = "chip"; b.dataset.key = key;
+  b.innerHTML = esc(label) + (n == null ? "" : `<span class="n">${n}</span>`);
+  b.addEventListener("click", () => { state.filter = key; render(); });
+  filtersEl.appendChild(b);
+});
+
+// Sequence select + table.
+const seqSel = document.getElementById("seq");
+seqSel.innerHTML = `<option value="">All sequences</option>` + DATA.sequences.map(s =>
+  `<option value="${esc(s.collection)}">${esc(shortId(s.collection))} · ${esc(s.camera || "unknown camera")} · median ${fmt(s.median)}</option>`).join("");
+seqSel.addEventListener("change", () => { state.seq = seqSel.value; if (state.seq) state.sort = "sequence"; render(); });
+if (!DATA.sequences.length) seqSel.hidden = true;
+const sortSel = document.getElementById("sort");
+sortSel.addEventListener("change", () => { state.sort = sortSel.value; render(); });
+if (DATA.sequences.length) {
+  document.getElementById("seqs-panel").hidden = false;
+  document.getElementById("seq-rows").innerHTML = DATA.sequences.map(s =>
+    `<tr data-seq="${esc(s.collection)}"><td><code>${esc(shortId(s.collection))}</code></td><td>${esc(s.camera || "–")}</td>` +
+    `<td class="num">${s.pictures}</td><td class="num">${fmt(s.median)}</td>` +
+    `<td class="num">${s.excluded || 0}</td></tr>`).join("");
+  document.querySelectorAll("#seq-rows tr").forEach(tr => tr.addEventListener("click", () => {
+    state.seq = tr.dataset.seq; state.sort = "sequence"; render();
+    document.getElementById("grid").scrollIntoView({behavior: "smooth"});
+  }));
+}
+
+function matches(p) {
+  if (state.seq && p.collection !== state.seq) return false;
+  if (state.filter === "all") return true;
+  if (state.filter === "kept") return !p.excluded;
+  if (state.filter === "excluded") return !!p.excluded;
+  if (state.filter === "unlabelled") return !labels[p.id];
+  if (state.filter === "labelled") return !!labels[p.id];
+  return p.excluded === state.filter;
+}
+
+function sorted(list) {
+  const bySeq = (a, b) => String(a.collection).localeCompare(String(b.collection)) || (a.rank ?? 0) - (b.rank ?? 0);
+  if (state.sort === "sequence") return list.sort(bySeq);
+  if (state.sort === "best") return list.sort((a, b) => (b.quality_score ?? 0) - (a.quality_score ?? 0));
+  return list.sort((a, b) => (!!b.excluded - !!a.excluded) || ((a.quality_score ?? 0) - (b.quality_score ?? 0)));
+}
+
+function tagsHtml(p) {
+  if (p.excluded) return `<span class="tag">excluded: ${esc(p.excluded.replace(/_/g, " "))}</span>`;
+  return `<span class="tag ok">kept</span>`;
+}
+
+function privacyLine(p) {
+  const bits = [];
+  if (p.blurred_area != null) bits.push(`blurred area ${Math.round(100 * p.blurred_area)}%`);
+  if (p.cpbd != null) bits.push(`sharp edges ${Math.round(100 * p.cpbd)}%`);
+  if (p.waviness_label) bits.push(`waviness ${Math.round(p.waviness_score)} (${p.waviness_label.replace(/_/g, " ")})`);
+  if (p.ad_rejected) bits.push("advertisement");
+  if (p.privacy_blur) bits.push(`privacy blur ${(100 * p.privacy_blur).toFixed(1)}% (${p.privacy_patches} faces/plates)`);
+  return bits.join(" · ");
+}
+
+function seqLine(p) {
+  const bits = [];
+  if (p.rank != null) bits.push(`#${p.rank}`);
+  if (p.sequence) bits.push(`median ${fmt(p.sequence.median)}`, `z ${p.sequence.z > 0 ? "+" : ""}${fmt(p.sequence.z, 1)}`);
+  return bits.join(" · ");
+}
+
+// Labelling: Blurred / OK buttons, saved by the server to the labels file.
+function labelButtons(p, keys = false) {
+  if (!LABELS_URL) return "";
+  const cur = labels[p.id];
+  const b = (k, text, key) => `<button class="lbl ${k}" data-label="${k}" aria-pressed="${cur === k}">${text}` +
+    (keys ? `<kbd>${key}</kbd>` : "") + `</button>`;
+  const other = cur && cur !== "blurred" && cur !== "ok" ? `<span class="lbl-other">earlier label: ${esc(cur)}</span>` : "";
+  return b("blurred", "Blurred", "B") + b("ok", "OK", "O") + other;
+}
+
+async function setLabel(p, label) {
+  const next = labels[p.id] === label ? null : label;   // clicking the active button clears it
+  try {
+    const res = await fetch(LABELS_URL, {method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({id: p.id, label: next})});
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || `HTTP ${res.status}`);
+    if (next) labels[p.id] = next; else delete labels[p.id];
+    const counter = document.getElementById("label-count");
+    if (counter) counter.outerHTML = labelSummary().slice(3);
+    return true;
+  } catch (err) {
+    const t = document.createElement("div");
+    t.className = "toast"; t.textContent = `Label not saved: ${err.message}`;
+    document.body.appendChild(t); setTimeout(() => t.remove(), 4000);
+    return false;
+  }
+}
+
+function wireLabels(container, p, after) {
+  container.querySelectorAll(".lbl").forEach(btn => btn.addEventListener("click", async e => {
+    e.stopPropagation();
+    if (await setLabel(p, btn.dataset.label)) after();
+  }));
+}
+
+function refreshCard(card, p) {
+  card.classList.toggle("labelled", !!labels[p.id]);
+  const row = card.querySelector(".label-row");
+  if (row) { row.innerHTML = labelButtons(p); wireLabels(row, p, () => refreshCard(card, p)); }
+}
+
+function render() {
+  filtersEl.querySelectorAll(".chip").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.key === state.filter)));
+  seqSel.value = state.seq; sortSel.value = state.sort;
+  view = sorted(pics.filter(matches));
+  const grid = document.getElementById("grid");
+  const frag = document.createDocumentFragment();
+  view.forEach((p, i) => {
+    const card = document.createElement("article");
+    card.className = "card" + (p.excluded ? " excluded" : "");
+    const pct = Math.max(0, Math.min(1, p.quality_score)) * 100;
+    card.innerHTML =
+      `<button class="thumb" aria-label="Open picture ${esc(shortId(p.id))}"><img loading="lazy" src="${esc(p.thumb)}" alt=""></button>` +
+      `<div class="meta"><div class="tags">${tagsHtml(p)}</div>` +
+      `<div class="score"><b>${fmt(p.quality_score)}</b><span class="bar"><i style="width:${pct}%"></i></span></div>` +
+      `<div class="line"><span>${p.is_pano ? "360°" : "flat"}</span><span>${esc(p.camera || "unknown camera")}</span></div>` +
+      (seqLine(p) ? `<div class="line"><span>${esc(seqLine(p))}</span></div>` : "") +
+      (privacyLine(p) ? `<div class="line"><span>${esc(privacyLine(p))}</span></div>` : "") +
+      `<div class="line">${p.viewer_url ? `<a href="${esc(p.viewer_url)}" target="_blank" rel="noopener">Panoramax viewer</a>` : ""}` +
+      `<span title="${esc(p.id)}">${esc(shortId(p.id))}</span></div>` +
+      (LABELS_URL ? `<div class="label-row"></div>` : "") + `</div>`;
+    card.querySelector(".thumb").addEventListener("click", () => openLb(i));
+    refreshCard(card, p);
+    frag.appendChild(card);
+  });
+  grid.replaceChildren(frag);
+  document.getElementById("empty").hidden = view.length > 0;
+}
+
+// Lightbox
+const lb = document.getElementById("lb");
+function openLb(i) {
+  lbIndex = (i + view.length) % view.length;
+  const p = view[lbIndex];
+  document.getElementById("lb-img").src = p.full || p.thumb;
+  const scores = Object.entries(p.scores || {}).map(([k, v]) => `${esc(k)} ${fmt(v)}`).join(" · ");
+  document.getElementById("lb-bar").innerHTML =
+    `<span class="tags">${tagsHtml(p)}</span><b>score ${fmt(p.quality_score)}</b><span>${scores}</span>` +
+    (seqLine(p) ? `<span>${esc(seqLine(p))}</span>` : "") +
+    (privacyLine(p) ? `<span>${esc(privacyLine(p))}</span>` : "") +
+    `<span>${p.is_pano ? "360°" : "flat"} · ${esc(p.camera || "unknown camera")}</span>` +
+    (p.viewer_url ? `<a href="${esc(p.viewer_url)}" target="_blank" rel="noopener">Open in Panoramax</a>` : "") +
+    `<span>${lbIndex + 1} / ${view.length}</span>` + labelButtons(p, true);
+  wireLabels(document.getElementById("lb-bar"), p, () => labelled(p));
+  if (!lb.open) lb.showModal();
+}
+
+// After labelling in the viewer: update the card behind it and move to the next picture.
+function labelled(p) {
+  const card = document.querySelectorAll("#grid .card")[view.indexOf(p)];
+  if (card) refreshCard(card, p);
+  if (labels[p.id] && lbIndex < view.length - 1) openLb(lbIndex + 1); else openLb(lbIndex);
+}
+document.getElementById("lb-prev").addEventListener("click", () => openLb(lbIndex - 1));
+document.getElementById("lb-next").addEventListener("click", () => openLb(lbIndex + 1));
+document.getElementById("lb-close").addEventListener("click", () => lb.close());
+lb.addEventListener("click", e => { if (e.target.classList.contains("lb") || e.target.classList.contains("lb-img")) lb.close(); });
+document.addEventListener("keydown", e => {
+  if (!lb.open) return;
+  if (e.key === "ArrowLeft") openLb(lbIndex - 1);
+  if (e.key === "ArrowRight") openLb(lbIndex + 1);
+  const key = e.key.toLowerCase();
+  if (LABELS_URL && (key === "b" || key === "o")) {
+    const p = view[lbIndex];
+    setLabel(p, key === "b" ? "blurred" : "ok").then(ok => ok && labelled(p));
+  }
+});
+
+render();
+</script>
+</body>
+</html>

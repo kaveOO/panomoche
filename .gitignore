@@ -1,9 +1,24 @@
-# Python environment and tool caches
-.venv/
+# Python bytecode
 __pycache__/
+*.py[cod]
+
+# Virtual environment (rebuilt by `uv sync`; uv.lock and .python-version ARE versioned)
+.venv/
+
+# Packaging and build output
+build/
+dist/
 *.egg-info/
+.eggs/
+*.egg
+*.whl
+*.tar.gz
+
+# Test and tool caches
 .pytest_cache/
 .ruff_cache/
+.coverage
+htmlcov/
 
 # Downloaded pictures, predictions and model weights (fetched or rebuilt locally, see README)
 data/
@@ -15,7 +30,8 @@ test_uploads/
 reports/*.html
 reports/*.jpg
 reports/*_rows.json
-review*.html
+# static review pages written by `predict --html` (anchored: panomoche/web/review.html is source)
+/review*.html
 
 # Archives and Windows download markers
 *.zip

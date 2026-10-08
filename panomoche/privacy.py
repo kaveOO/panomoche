@@ -44,7 +44,7 @@ def parse_sgblur_record(data: bytes) -> list[dict] | None:
         text = data[i + 4 : i + 2 + size].decode("utf-8", "replace").strip()
         try:
             value = ast.literal_eval(text)  # literals only: safe on untrusted input
-        except (ValueError, SyntaxError):
+        except ValueError, SyntaxError:
             value = None
         if isinstance(value, list) and all(isinstance(d, dict) and "class" in d for d in value):
             return value
