@@ -15,7 +15,6 @@ excludes the picture; if none matches, it is kept.
 
 | Reason | Excluded when |
 |---|---|
-| `labelled_blurred` | a reviewer marked it Blurred |
 | `low_resolution` | fewer than 15 px per degree of view |
 | `advertisement` | it is an advertising graphic (SigLIP 2 + OCR) |
 | `privacy_blur` | blurred faces and plates cover more than 5% of it |
@@ -47,7 +46,7 @@ uv run panomoche serve --predictions data/new.jsonl                  # http://lo
 ```
 
 The server opens an upload page to test your own pictures, and a review page to browse the
-results and mark blurred pictures. `POST /predict` is the endpoint a Panoramax server would
+results. `POST /predict` is the endpoint a Panoramax server would
 call on upload. **Nothing is written to Panoramax** unless `panomoche tag --apply` is run.
 
 The orientation check needs a model trained once from upright pictures (about 10 minutes, no

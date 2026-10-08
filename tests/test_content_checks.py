@@ -124,41 +124,6 @@ def test_stray_quote_in_ocr_output_does_not_hide_the_following_words(monkeypatch
     assert {"50% off", "limited offer", "sale"} <= set(ocr["promotional_terms"])
 
 
-def test_pictures_marked_blurred_are_excluded_and_ok_never_keeps():
-    from panomoche.decision import apply_labels
-
-    rows = decide(sequence(21, "s", topiq=0.6, blurred=0.05))
-    rows[2]["blurred_area"] = 0.65
-    decide(rows)
-    apply_labels(rows, {rows[5]["id"]: "blurred", rows[2]["id"]: "ok", rows[7]["id"]: "exclude"})
-    assert status(rows[5]) == "labelled_blurred" and status(rows[7]) == "labelled_excluded"
-    assert status(rows[2]) == "not_sharp"  # "OK" doesn't override the rules
-    apply_labels(rows, {})  # labels cleared: the rules' verdict is back
-    assert status(rows[5]) == "kept" and status(rows[2]) == "not_sharp"
-    rows[5]["reviewer_label"] = "blurred"
-    assert status(decide(rows)[5]) == "labelled_blurred"  # predict honours labels too
-
-
-def test_review_page_label_excludes_at_once(tmp_path, review_client):
-    import json as _json
-
-    from fastapi.testclient import TestClient
-
-    from panomoche.service import create_app
-
-    from .test_service import INFO, embedded, fake_score
-
-    labels = tmp_path / "labels.json"
-    labels.write_text(_json.dumps({"pic-2": "blurred"}))
-    client = TestClient(create_app(fake_score, INFO, tmp_path / "preds.jsonl", labels=labels))
-    pics = {p["id"]: p for p in embedded(client.get("/review").text, "data")["pictures"]}
-    assert pics["pic-2"]["excluded"] == "labelled_blurred" and pics["pic-5"]["excluded"] is None
-    client.post("/api/labels", json={"id": "pic-5", "label": "blurred"})
-    client.post("/api/labels", json={"id": "pic-2", "label": None})
-    pics = {p["id"]: p for p in embedded(client.get("/review").text, "data")["pictures"]}
-    assert pics["pic-5"]["excluded"] == "labelled_blurred" and pics["pic-2"]["excluded"] is None
-
-
 def test_duplicates_and_known_pictures(tmp_path):
     from panomoche.dedupe import drop_duplicates, known_ids
 
@@ -175,9 +140,4 @@ def test_duplicates_and_known_pictures(tmp_path):
     assert [r["id"] for r in kept] == ["b"]
     assert {d["id"]: d["duplicate_of"] for d in dups} == {"a_again": "a", "a_recompressed": "a"}
     (tmp_path / "preds.jsonl").write_text('{"id": "x"}\n{"id": "y"}\n')
-    (tmp_path / "labels.json").write_text('{"z": "blurred"}')
-    assert known_ids([tmp_path / "preds.jsonl", tmp_path / "labels.json", tmp_path / "missing.jsonl"]) == {
-        "x",
-        "y",
-        "z",
-    }
+    assert known_ids([tmp_path / "preds.jsonl", tmp_path / "missing.jsonl"]) == {"x", "y"}

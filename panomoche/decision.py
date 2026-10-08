@@ -6,10 +6,6 @@ rules. A picture is excluded, with one reason in ``excluded``, when any of
 these applies:
 
 1. **Whatever the context**
-   * ``labelled_blurred`` / ``labelled_excluded``: a reviewer marked the picture
-     Blurred on the review page (``data/user_labels.json``, ``apply_labels``).
-     Reviewer labels only ever exclude: an "OK" label never keeps a picture
-     the rules exclude;
    * ``low_resolution``: below 15 px per degree (``metadata.py``);
    * ``advertisement``: an obvious advertising graphic: SigLIP 2 layout match
      plus OCR-read promotional wording (``advertising/``). Anything ambiguous,
@@ -120,28 +116,7 @@ def _confirmed_wavy(r: dict, neighbours: list[dict], min_share: float) -> bool:
     return len(measured) >= 2 and sum(n["waviness_label"] == "wavy" for n in measured) / len(measured) >= min_share
 
 
-LABEL_EXCLUSIONS = {"blurred": "labelled_blurred", "exclude": "labelled_excluded"}
-
-
-def apply_labels(rows: list[dict], labels: dict[str, str]) -> list[dict]:
-    """Record each reviewer label on its row and exclude what the reviewer marked, in place.
-
-    Works on rows already decided (the rules' own verdict is kept in ``rules_excluded``, so clearing
-    a label restores it) as well as before ``decide``, which also honours ``reviewer_label``.
-    """
-    for r in rows:
-        if "rules_excluded" not in r:
-            r["rules_excluded"] = r.get("excluded")
-        label = labels.get(r["id"])
-        r["reviewer_label"] = label
-        r["excluded"] = LABEL_EXCLUSIONS.get(label) or r["rules_excluded"]
-        r["low_quality"] = bool(r["excluded"])
-    return rows
-
-
 def hard_exclusion(r: dict, rules: Rules) -> str | None:
-    if r.get("reviewer_label") in LABEL_EXCLUSIONS:
-        return LABEL_EXCLUSIONS[r["reviewer_label"]]
     reason = metadata_exclusion(r, rules.max_gps_accuracy, rules.min_pixel_density)
     if reason:
         return reason
@@ -169,7 +144,8 @@ def decide(rows: list[dict], rules: Rules | None = None) -> list[dict]:
     near = _neighbours(rows, rules.window)
     for i, r in enumerate(rows):
         r.pop("excluded", None)
-        r.pop("rules_excluded", None)
+        r.pop("rules_excluded", None)  # left by older versions' reviewer labels
+        r.pop("reviewer_label", None)
         r.pop("sequence", None)
         issues = [x for x in r.get("issues", []) if x not in (LOW_QUALITY, SEQUENCE_ISSUE)]
         nb = near.get(i, [])

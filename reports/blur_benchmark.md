@@ -21,8 +21,6 @@ Pictures: 200 (45 360°, 50 cameras) from data/new.jsonl, each untouched and blu
 
 Median time per picture: blur rule (area + CPBD) 23.4 ms, Laplacian variance 1.8 ms, TOPIQ 221.9 ms
 
-Reviewer labels: 34 pictures marked Blurred; blur rule catches 1, any rule excludes 1.
-
 
 ## What it shows
 
@@ -41,10 +39,5 @@ Reviewer labels: 34 pictures marked Blurred; blur rule catches 1, any rule exclu
 * **Untouched pictures flagged: 3.5%** (7 of 200), the same pictures `predict` excludes as
   not sharp. Checked by eye on the whole new dataset: mostly rain, night, dashboards and
   side-window motion, plus a few borderline soft phone pictures.
-* **Reviewer labels:** of the 34 pictures marked Blurred, the blur rule catches 1. Most are
-  handlebar and helmet-camera pictures with smear or wobble that measure as sharp one by one;
-  the labels exclude them now (`labelled_blurred`). The learned model
-  (`scripts/blur_model_eval.py`) catches 19 of 24 unseen handlebar pictures, but not the 360°
-  smear or other cameras.
 * **Speed:** the rule takes 23 ms per picture, a hundredth of the time of the whole
   `predict` pipeline.

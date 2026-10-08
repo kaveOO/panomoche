@@ -6,7 +6,6 @@
     GET  /api/info       scorer, model and thresholds
     POST /predict        multipart ``picture`` (+ optional ``is_pano``, ``sgblur``) -> prediction + semantics
     POST /api/sequence   compare already-scored pictures as one sequence, in the given order
-    POST /api/labels     ``{"id", "label": "blurred" | "ok" | null}``: a reviewer's judgement, saved to ``--labels``
 
 ``/predict`` is also what a Panoramax backend would call on upload, the way
 GeoVisio delegates face and plate blurring to an external SGBlur service.
@@ -15,8 +14,6 @@ GeoVisio delegates face and plate blurring to an external SGBlur service.
 from __future__ import annotations
 
 import io
-import json
-import os
 import threading
 import time
 from functools import lru_cache
@@ -28,7 +25,6 @@ from fastapi.responses import FileResponse, HTMLResponse, Response
 from PIL import Image
 
 from . import __version__
-from .decision import LABEL_EXCLUSIONS
 from .imaging import load_image, prepare
 from .panoramax import DEFAULT_TAG_KEY, read_jsonl, semantics_for
 from .privacy import blurred_share, parse_sgblur_header, privacy_from_file
@@ -49,21 +45,6 @@ def _thumbnail(path: str) -> bytes:
     return buf.getvalue()
 
 
-LABELS = ("blurred", "ok")  # what the review page's buttons record
-
-
-def load_labels(path: Path | None) -> dict[str, str]:
-    return json.loads(path.read_text()) if path and path.is_file() else {}
-
-
-def save_labels(path: Path, labels: dict[str, str]) -> None:
-    """Write atomically: a crash mid-write must not lose the labels already collected."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(labels, indent=1))
-    os.replace(tmp, path)
-
-
 PRIVACY_FIELDS = ("privacy_blur", "privacy_patches", "privacy_record", "privacy_boxes")
 KNOWN_FIELDS = ("collection", "rank", "camera", "original_size", "gps_accuracy", "pixel_density", "datetime")
 
@@ -71,15 +52,14 @@ KNOWN_FIELDS = ("collection", "rank", "camera", "original_size", "gps_accuracy",
 def _redecide(rows: list[dict], rules, decide) -> None:
     """Re-decide stored predictions with the given rules. Pictures judged with neighbours fetched from
     Panoramax (``context_fetched``, not in the file) keep that judgement."""
+    for r in rows:
+        if "rules_excluded" in r:  # files written by older versions, which had reviewer labels
+            r["excluded"] = r.pop("rules_excluded")
     kept = {
         r["id"]: {k: r.get(k) for k in ("excluded", "issues", "low_quality", "context")}
         for r in rows
         if r.get("context_fetched")
     }
-    for r in rows:
-        r["reviewer_label"] = None  # labels are applied afterwards, from the labels file
-        if r.get("rules_excluded", "missing") != "missing":
-            r["excluded"] = r.pop("rules_excluded")
     if rows:
         decide(rows, rules)
     for r in rows:
@@ -93,7 +73,6 @@ def create_app(
     predictions: Path | None = None,
     rules=None,
     orientation=None,
-    labels: Path | None = None,
     waviness: bool = False,
     ads: bool = False,
 ) -> FastAPI:
@@ -107,9 +86,6 @@ def create_app(
 
     ``waviness`` / ``ads``: also run the merged waviness and advertisement checks on uploads
     (``serve`` turns both on; the advertisement model loads on first use).
-
-    ``labels``: JSON file of reviewer judgements (picture id -> label). When given, the review page
-    shows Blurred / OK buttons that write to it, to train a blur model on real pictures later.
     """
     from .decision import Rules, decide
 
@@ -132,12 +108,6 @@ def create_app(
     _redecide(rows, rules, decide)
     by_id = {r["id"]: r for r in rows}
     lock = threading.Lock()  # one picture at a time: bounded memory and CPU on small machines
-    label_lock = threading.Lock()
-    user_labels = load_labels(labels)
-    if labels:
-        from .decision import apply_labels
-
-        apply_labels(rows, user_labels)  # pictures marked Blurred are excluded
     app = FastAPI(title="panomoche", version=__version__)
 
     @app.get("/", response_class=HTMLResponse)
@@ -211,9 +181,6 @@ def create_app(
             decide([*seq, row], rules)
         else:
             decide([row], rules)
-        if known and labels is not None and user_labels.get(known["id"]) in LABEL_EXCLUSIONS:
-            row["excluded"] = LABEL_EXCLUSIONS[user_labels[known["id"]]]  # marked Blurred on the review page
-            row["low_quality"] = True
         row["elapsed_ms"] = round((time.perf_counter() - start) * 1000)
         row["semantics"] = semantics_for(row, tag_key)  # TOPIQ findings only; hard exclusions aren't tagged
         return row
@@ -264,29 +231,7 @@ def create_app(
             f"Review: {predictions.name}",
             lambda r, size: f"images/{quote(r['id'])}?size={size}",
             upload_url="./",
-            labels=user_labels if labels else None,
-            labels_url="api/labels" if labels else None,
         )
-
-    @app.post("/api/labels")
-    def set_label(payload: dict = Body(...)):
-        """Record (or clear, with ``label: null``) a reviewer's judgement of one listed picture."""
-        if labels is None:
-            raise HTTPException(status_code=404, detail="labels are off: start the server with --labels")
-        pid, label = str(payload.get("id", "")), payload.get("label")
-        if pid not in by_id:
-            raise HTTPException(status_code=404, detail="unknown picture")
-        if label is not None and label not in LABELS:
-            raise HTTPException(status_code=422, detail=f"label must be one of {LABELS} or null")
-        with label_lock:
-            if label is None:
-                user_labels.pop(pid, None)
-            else:
-                user_labels[pid] = label
-            save_labels(labels, user_labels)
-            apply_labels([by_id[pid]], user_labels)
-            counts = {k: sum(v == k for v in user_labels.values()) for k in LABELS}
-        return {"id": pid, "label": label, "counts": counts}
 
     @app.get("/images/{picture_id}")
     def image(picture_id: str, size: str = "thumb"):

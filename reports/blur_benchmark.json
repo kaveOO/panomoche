@@ -71,10 +71,5 @@
   "blur rule (area + CPBD)": 23.4,
   "Laplacian variance": 1.8,
   "TOPIQ": 221.9
- },
- "labels": {
-  "blurred": 34,
-  "caught_by_blur_rule": 1,
-  "excluded_by_any_rule": 1
  }
 }

@@ -13,10 +13,6 @@ exclude only pictures that are really not clean. A picture is excluded, with
 one reason, when any of these applies:
 
 1. **Whatever the context**
-   * `labelled_blurred` / `labelled_excluded`: you marked the picture Blurred
-     on the review page. `predict` and the review page both read
-     `data/user_labels.json`; an "OK" label never keeps a picture the rules
-     exclude;
    * `low_resolution`: below 15 px per degree;
    * `advertisement`: an obvious advertising graphic (see "Waviness and
      advertisement checks");
@@ -78,7 +74,7 @@ silently scoring the wrong pictures.
 ### New dataset, without repeats
 
 `fetch` never brings back a picture already judged: it skips every id in
-`--skip-known` (by default `data/all.jsonl` and your labels). With
+`--skip-known` (by default `data/all.jsonl`). With
 `--new-sequences`, it also skips sequences already sampled. It removes
 duplicates: the same file, or near-identical pictures (64-bit difference hash,
 at most 6 bits apart), such as a camera shooting while stopped at a light or a
@@ -455,7 +451,7 @@ than 6 GB of RAM for it, so `IQAScorer` patches it to run in small batches.
 > This was the project's first approach. It is no longer in the code: TOPIQ and the rules
 > above replaced it, and the `build`, `train` and `--scorer classifier` commands described
 > below were removed in version 0.2. DINOv3 is still used for the orientation check and the
-> blur and rain experiments. The section is kept as a record of what was tried.
+> rain experiment. The section is kept as a record of what was tried.
 
 
 ```

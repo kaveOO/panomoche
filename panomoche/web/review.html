@@ -68,18 +68,7 @@ table.seq tbody tr:hover { background: var(--surface-2); }
 .line a { color: var(--accent); text-decoration: none; }
 .line a:hover { text-decoration: underline; }
 .empty { color: var(--muted); padding: 40px 0; text-align: center; }
-.label-row { display: flex; gap: 6px; align-items: center; }
-.lbl { flex: 1; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 7px;
-  padding: 4px 8px; font: inherit; font-size: 12.5px; cursor: pointer; }
-.lbl:hover { background: var(--surface-2); }
-.lbl.blurred[aria-pressed="true"] { background: var(--bad); border-color: var(--bad); color: #fff; }
-.lbl.ok[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: #fff; }
-.lbl-other { font-size: 12px; color: var(--muted); }
-.card.labelled { outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent); outline-offset: -1px; }
-.toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--bad); color: #fff;
-  padding: 8px 14px; border-radius: 8px; font-size: 13px; z-index: 20; }
-.lb-bar .lbl { flex: none; background: rgb(255 255 255 / 12%); border-color: transparent; color: #fff; padding: 4px 12px; }
-.lb-bar .lbl kbd { font: inherit; opacity: .6; margin-left: 4px; }
+
 dialog { border: 0; padding: 0; background: transparent; max-width: 100vw; max-height: 100vh; width: 100vw; height: 100vh; }
 dialog::backdrop { background: rgb(0 0 0 / 88%); }
 .lb { width: 100%; height: 100%; display: grid; grid-template-rows: 1fr auto; color: #f2f2f2; }
@@ -153,26 +142,17 @@ const shortId = id => String(id).slice(0, 8);
 document.title = DATA.title;
 document.getElementById("title").textContent = DATA.title;
 const excludedCount = pics.filter(p => p.excluded).length;
-const LABELS_URL = DATA.labels_url;          // null on a static report: no buttons
-const labels = DATA.labels || {};
-function labelSummary() {
-  if (!LABELS_URL) return "";
-  const n = k => pics.filter(p => labels[p.id] === k).length;
-  return ` · <span id="label-count">labelled: ${n("blurred")} blurred, ${n("ok")} OK</span>`;
-}
 document.getElementById("summary").innerHTML =
-  `${pics.length} pictures · ${pics.length - excludedCount} kept · ${excludedCount} excluded` + labelSummary() +
+  `${pics.length} pictures · ${pics.length - excludedCount} kept · ${excludedCount} excluded` +
   (DATA.sequences.length ? ` · ${DATA.sequences.length} sequences` : "") +
   (DATA.upload_url ? ` · <a href="${esc(DATA.upload_url)}">Test your own pictures</a>` : "") +
-  ` · click a picture to see it full size, ← → to browse` +
-  (LABELS_URL ? `, <b>B</b> blurred / <b>O</b> OK to label it and go to the next one` : "");
+  ` · click a picture to see it full size, ← → to browse`;
 
 // Filter chips: all, kept, excluded, then one per exclusion reason.
 const reasonCounts = {};
 pics.forEach(p => { if (p.excluded) reasonCounts[p.excluded] = (reasonCounts[p.excluded] || 0) + 1; });
 const chips = [["all", "All", pics.length], ["kept", "Kept", pics.length - excludedCount], ["excluded", "Excluded", excludedCount],
   ...Object.entries(reasonCounts).sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, k.replace(/_/g, " "), n])];
-if (LABELS_URL) chips.push(["unlabelled", "Not labelled yet", null], ["labelled", "Labelled", null]);
 const filtersEl = document.getElementById("filters");
 chips.forEach(([key, label, n]) => {
   const b = document.createElement("button");
@@ -207,8 +187,6 @@ function matches(p) {
   if (state.filter === "all") return true;
   if (state.filter === "kept") return !p.excluded;
   if (state.filter === "excluded") return !!p.excluded;
-  if (state.filter === "unlabelled") return !labels[p.id];
-  if (state.filter === "labelled") return !!labels[p.id];
   return p.excluded === state.filter;
 }
 
@@ -241,47 +219,6 @@ function seqLine(p) {
   return bits.join(" · ");
 }
 
-// Labelling: Blurred / OK buttons, saved by the server to the labels file.
-function labelButtons(p, keys = false) {
-  if (!LABELS_URL) return "";
-  const cur = labels[p.id];
-  const b = (k, text, key) => `<button class="lbl ${k}" data-label="${k}" aria-pressed="${cur === k}">${text}` +
-    (keys ? `<kbd>${key}</kbd>` : "") + `</button>`;
-  const other = cur && cur !== "blurred" && cur !== "ok" ? `<span class="lbl-other">earlier label: ${esc(cur)}</span>` : "";
-  return b("blurred", "Blurred", "B") + b("ok", "OK", "O") + other;
-}
-
-async function setLabel(p, label) {
-  const next = labels[p.id] === label ? null : label;   // clicking the active button clears it
-  try {
-    const res = await fetch(LABELS_URL, {method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({id: p.id, label: next})});
-    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || `HTTP ${res.status}`);
-    if (next) labels[p.id] = next; else delete labels[p.id];
-    const counter = document.getElementById("label-count");
-    if (counter) counter.outerHTML = labelSummary().slice(3);
-    return true;
-  } catch (err) {
-    const t = document.createElement("div");
-    t.className = "toast"; t.textContent = `Label not saved: ${err.message}`;
-    document.body.appendChild(t); setTimeout(() => t.remove(), 4000);
-    return false;
-  }
-}
-
-function wireLabels(container, p, after) {
-  container.querySelectorAll(".lbl").forEach(btn => btn.addEventListener("click", async e => {
-    e.stopPropagation();
-    if (await setLabel(p, btn.dataset.label)) after();
-  }));
-}
-
-function refreshCard(card, p) {
-  card.classList.toggle("labelled", !!labels[p.id]);
-  const row = card.querySelector(".label-row");
-  if (row) { row.innerHTML = labelButtons(p); wireLabels(row, p, () => refreshCard(card, p)); }
-}
-
 function render() {
   filtersEl.querySelectorAll(".chip").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.key === state.filter)));
   seqSel.value = state.seq; sortSel.value = state.sort;
@@ -300,10 +237,8 @@ function render() {
       (seqLine(p) ? `<div class="line"><span>${esc(seqLine(p))}</span></div>` : "") +
       (privacyLine(p) ? `<div class="line"><span>${esc(privacyLine(p))}</span></div>` : "") +
       `<div class="line">${p.viewer_url ? `<a href="${esc(p.viewer_url)}" target="_blank" rel="noopener">Panoramax viewer</a>` : ""}` +
-      `<span title="${esc(p.id)}">${esc(shortId(p.id))}</span></div>` +
-      (LABELS_URL ? `<div class="label-row"></div>` : "") + `</div>`;
+      `<span title="${esc(p.id)}">${esc(shortId(p.id))}</span></div></div>`;
     card.querySelector(".thumb").addEventListener("click", () => openLb(i));
-    refreshCard(card, p);
     frag.appendChild(card);
   });
   grid.replaceChildren(frag);
@@ -323,17 +258,10 @@ function openLb(i) {
     (privacyLine(p) ? `<span>${esc(privacyLine(p))}</span>` : "") +
     `<span>${p.is_pano ? "360°" : "flat"} · ${esc(p.camera || "unknown camera")}</span>` +
     (p.viewer_url ? `<a href="${esc(p.viewer_url)}" target="_blank" rel="noopener">Open in Panoramax</a>` : "") +
-    `<span>${lbIndex + 1} / ${view.length}</span>` + labelButtons(p, true);
-  wireLabels(document.getElementById("lb-bar"), p, () => labelled(p));
+    `<span>${lbIndex + 1} / ${view.length}</span>`;
   if (!lb.open) lb.showModal();
 }
 
-// After labelling in the viewer: update the card behind it and move to the next picture.
-function labelled(p) {
-  const card = document.querySelectorAll("#grid .card")[view.indexOf(p)];
-  if (card) refreshCard(card, p);
-  if (labels[p.id] && lbIndex < view.length - 1) openLb(lbIndex + 1); else openLb(lbIndex);
-}
 document.getElementById("lb-prev").addEventListener("click", () => openLb(lbIndex - 1));
 document.getElementById("lb-next").addEventListener("click", () => openLb(lbIndex + 1));
 document.getElementById("lb-close").addEventListener("click", () => lb.close());
@@ -342,11 +270,6 @@ document.addEventListener("keydown", e => {
   if (!lb.open) return;
   if (e.key === "ArrowLeft") openLb(lbIndex - 1);
   if (e.key === "ArrowRight") openLb(lbIndex + 1);
-  const key = e.key.toLowerCase();
-  if (LABELS_URL && (key === "b" || key === "o")) {
-    const p = view[lbIndex];
-    setLabel(p, key === "b" ? "blurred" : "ok").then(ok => ok && labelled(p));
-  }
 });
 
 render();

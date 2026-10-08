@@ -22,7 +22,6 @@ matches, the picture is kept.
 
 | Reason | Excluded when | Measured by |
 |---|---|---|
-| `labelled_blurred` | a reviewer marked it Blurred on the review page | `data/user_labels.json` |
 | `low_resolution` | fewer than 15 px per degree of view | Panoramax metadata |
 | `advertisement` | layout, text area and commercial wording all point to an advertising graphic | SigLIP 2 + Tesseract OCR |
 | `privacy_blur` | blurred faces and plates cover more than 5% of the picture | SGBlur's record in the original file |
@@ -40,7 +39,8 @@ matches, the picture is kept.
   dashcam behind a windshield is softer than a phone on every picture. Comparing a picture
   with its neighbours finds the ones that are worse than their own camera's normal. A
   picture judged alone gets the benefit of the doubt.
-* **No manual "keep".** Reviewer labels can only exclude. The rules decide everything else.
+* **No manual override.** The rules alone decide: there is no button to keep or exclude a
+  picture by hand.
 * **One system everywhere.** `predict`, the upload page and the review page all call the
   same `decide` function. Uploading a picture that is on the review page gives the same
   verdict.
@@ -80,7 +80,7 @@ The rule takes 23 ms per picture. Motion blur is its weak spot (see [Known limit
 |---|---|---|
 | Language | Python 3.14, managed with [uv](https://docs.astral.sh/uv/) | everything |
 | Image quality | [TOPIQ-NR](https://github.com/chaofengc/IQA-PyTorch) (SPAQ weights), `pyiqa` 0.1, PyTorch 2 on CPU | quality score, sequence comparison |
-| Vision backbone | [DINOv3](https://github.com/facebookresearch/dinov3) ViT-S/16 via `timm` 1.0 | orientation classifier, blur and rain experiments |
+| Vision backbone | [DINOv3](https://github.com/facebookresearch/dinov3) ViT-S/16 via `timm` 1.0 | orientation classifier, rain experiment |
 | Vision-language | [SigLIP 2](https://huggingface.co/google/siglip2-base-patch16-224) base, quantized ONNX, `onnxruntime` 1.30, `tokenizers` | advertisement layout |
 | OCR | Tesseract 5 (English) | advertisement wording |
 | Classic vision | OpenCV 5, NumPy 2, Pillow 12 | sharpness, waviness, 360° projections |
@@ -115,17 +115,12 @@ Shows every picture of the predictions file, with:
 * a per-sequence table and sequence order;
 * a full-size viewer (use ← and → to browse).
 
-The **Blurred** and **OK** buttons save your judgement to `data/user_labels.json`. In the
-viewer, the **B** and **O** keys do the same and move to the next picture. A picture marked
-Blurred is excluded right away, and in every later run.
-
 ### HTTP API
 
 | Endpoint | Does |
 |---|---|
 | `POST /predict` | judge one picture (multipart `picture`, optional `sgblur` header from SGBlur) |
 | `POST /api/sequence` | judge measured pictures together as one sequence |
-| `POST /api/labels` | save a Blurred / OK label |
 | `GET /api/info` | model, thresholds and enabled checks |
 
 `POST /predict` is what a Panoramax backend would call on upload, the same way it already
@@ -143,7 +138,7 @@ calls SGBlur for privacy blurring.
 | `panomoche ads` / `ads-ui` / `ads-setup` | the merged Advertisement Check: batch reports, its own UI, or the model download |
 
 Every command has `--help`. Useful options: `--no-sequence`, `--no-orientation`,
-`--no-waviness`, `--no-ads`, `--max-blurred-area`, `--max-privacy-blur`, `--labels`.
+`--no-waviness`, `--no-ads`, `--max-blurred-area`, `--max-privacy-blur`.
 
 ## Things to know
 
@@ -176,10 +171,7 @@ Every command has `--help`. Useful options: `--no-sequence`, `--no-orientation`,
 
 * **Motion blur:** the rule catches 73% of strong motion blur, against 100% of focus blur.
   Smear that keeps detail across the motion direction (handlebar and helmet mounts, the LG
-  360° camera) often measures as sharp. Reviewer labels cover these cases for now. A DINOv3
-  model trained on those labels catches 19 of 24 unseen handlebar pictures, but does not yet
-  generalise to other cameras (`scripts/blur_model_eval.py`). More varied labels are the way
-  forward.
+  360° camera) often measures as sharp.
 * **Rain on the lens:** drops are local soft patches inside a sharp scene, so the blur rule
   lets these pictures through. A DINOv3 classifier recognises them: it flags 30 of 30 rainy
   frames of an unseen sequence and 0 of 30 clean pictures (`scripts/rain_model_eval.py`).
@@ -236,10 +228,10 @@ panomoche/
   sequence.py         per-sequence summaries
   dedupe.py           known-picture skipping, duplicate and near-duplicate removal
   panoramax.py        Panoramax API client, sampling, semantics payloads
-  service.py          FastAPI app (upload, review, labels, API)
+  service.py          FastAPI app (upload, review, API)
   report.py           review page rendering (served or static)
   imaging.py          loading, 360° detection, views
-  backbone.py         DINOv3 feature extractor (orientation, blur and rain experiments)
+  backbone.py         DINOv3 feature extractor (orientation, rain experiment)
   waviness/           merged Waviness Check v0.2 (detector, UI)
   advertising/        merged Advertisement Check v0.4 (SigLIP 2 + OCR classifier, UI, policy)
   web/                upload.html, review.html

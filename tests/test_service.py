@@ -245,29 +245,11 @@ def test_cli_predict_excludes_heavily_blurred_pictures(tmp_path, monkeypatch):
     assert not any(r.get("excluded") for r in read_jsonl(out))
 
 
-def test_review_labels_are_saved_and_shown(tmp_path, review_client):
-    import json as _json
-
-    labels = tmp_path / "labels.json"
-    labels.write_text(_json.dumps({"pic-1": "exclude"}))  # earlier labels are kept as they are
-    app_client = TestClient(create_app(fake_score, INFO, tmp_path / "preds.jsonl", labels=labels))
-    r = app_client.post("/api/labels", json={"id": "pic-3", "label": "blurred"})
-    assert r.status_code == 200 and r.json()["counts"] == {"blurred": 1, "ok": 0}
-    assert app_client.post("/api/labels", json={"id": "pic-4", "label": "ok"}).status_code == 200
-    assert _json.loads(labels.read_text()) == {"pic-1": "exclude", "pic-3": "blurred", "pic-4": "ok"}
-    assert app_client.post("/api/labels", json={"id": "pic-4", "label": None}).status_code == 200  # cleared
-    assert "pic-4" not in _json.loads(labels.read_text())
-    data = embedded(app_client.get("/review").text, "data")
-    assert data["labels"] == {"pic-1": "exclude", "pic-3": "blurred"} and data["labels_url"] == "api/labels"
-
-
-def test_review_labels_are_validated(tmp_path, review_client):
-    app_client = TestClient(create_app(fake_score, INFO, tmp_path / "preds.jsonl", labels=tmp_path / "l.json"))
-    assert app_client.post("/api/labels", json={"id": "nope", "label": "ok"}).status_code == 404
-    assert app_client.post("/api/labels", json={"id": "pic-1", "label": "great"}).status_code == 422
-    assert not (tmp_path / "l.json").exists()
-    assert review_client.post("/api/labels", json={"id": "pic-1", "label": "ok"}).status_code == 404  # labels off
-    assert embedded(review_client.get("/review").text, "data")["labels_url"] is None
+def test_no_manual_labelling(review_client):
+    """Verdicts come from the rules only: no labelling endpoint, no Blurred / OK buttons."""
+    assert review_client.post("/api/labels", json={"id": "pic-1", "label": "blurred"}).status_code in (404, 405)
+    page = review_client.get("/review").text
+    assert "labels_url" not in embedded(page, "data") and "Blurred" not in page
 
 
 def _served(tmp_path, rows, **kw):
@@ -343,12 +325,22 @@ def test_uploading_a_review_picture_gives_the_review_verdict(tmp_path):
     assert alone["context"] is None and alone["excluded"] == "low_quality"  # unknown picture: alone
 
 
-def test_upload_of_a_picture_marked_blurred_is_excluded_like_on_the_review_page(tmp_path):
-    import json as _json
-
-    labels = tmp_path / "labels.json"
-    labels.write_text(_json.dumps({"pic-0": "blurred"}))
-    rows = [{"id": "pic-0", "is_pano": False, "quality_score": 0.6, "blurred_area": 0.05, "cpbd": 0.4, "issues": []}]
-    client = _served(tmp_path, rows, labels=labels)
+def test_reviewer_labels_left_in_old_prediction_files_are_ignored(tmp_path):
+    rows = [
+        {
+            "id": "pic-0",
+            "is_pano": False,
+            "quality_score": 0.6,
+            "blurred_area": 0.05,
+            "cpbd": 0.4,
+            "issues": [],
+            "excluded": "labelled_blurred",
+            "rules_excluded": None,
+            "reviewer_label": "blurred",
+        }
+    ]
+    client = _served(tmp_path, rows)
+    (pic,) = embedded(client.get("/review").text, "data")["pictures"]
+    assert pic["excluded"] is None
     body = client.post("/predict", files={"picture": ("pic-0.jpg", jpeg(800, 600), "image/jpeg")}).json()
-    assert body["excluded"] == "labelled_blurred"
+    assert body["excluded"] is None and "reviewer_label" not in body

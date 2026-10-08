@@ -263,9 +263,6 @@ def cmd_predict(a):
     if a.no_sequence:
         for r in rows:
             r["rank"] = None  # judge every picture alone
-    labels = json.loads(a.labels.read_text()) if a.labels and a.labels.is_file() else {}
-    for r in rows:
-        r["reviewer_label"] = labels.get(r["id"])  # pictures marked Blurred on the review page are excluded
     decide(rows, _rules(a))  # the one decision: excluded or kept
 
     write_jsonl(a.out, rows)
@@ -341,7 +338,6 @@ def cmd_serve(a):
         a.predictions,
         rules=_rules(a),
         orientation=_orientation_checker(a),
-        labels=None if a.no_labels else a.labels,
         waviness=not a.no_waviness,
         ads=not a.no_ads,
     )
@@ -481,8 +477,8 @@ def main(argv=None):
         "--skip-known",
         type=Path,
         nargs="*",
-        default=[Path("data/all.jsonl"), Path("data/user_labels.json")],
-        help="never fetch pictures listed in these predictions/labels files; also the reference "
+        default=[Path("data/all.jsonl")],
+        help="never fetch pictures listed in these predictions files; also the reference "
         "for duplicate removal (default: %(default)s)",
     )
     p.add_argument(
@@ -495,12 +491,6 @@ def main(argv=None):
     p.set_defaults(fn=cmd_fetch, orientation_model=None, min_orientation_confidence=1.0)
 
     p = sub.add_parser("predict", help="score local pictures and/or Panoramax pictures")
-    p.add_argument(
-        "--labels",
-        type=Path,
-        default=Path("data/user_labels.json"),
-        help="reviewer labels: pictures marked Blurred are excluded (default %(default)s)",
-    )
     p.add_argument("paths", type=Path, nargs="*")
     p.add_argument(
         "--abs-threshold",
@@ -555,13 +545,6 @@ def main(argv=None):
     p.add_argument("--abs-threshold", type=float, default=0.32, help="topiq floor for 360° pictures")
     p.add_argument("--abs-threshold-flat", type=float, default=0.40, help="topiq floor for flat pictures alone")
     p.add_argument("--predictions", type=Path, help="predictions JSONL to browse at /review")
-    p.add_argument(
-        "--labels",
-        type=Path,
-        default=Path("data/user_labels.json"),
-        help="where the review page's Blurred / OK buttons save judgements (default %(default)s)",
-    )
-    p.add_argument("--no-labels", action="store_true", help="hide the labelling buttons")
     p.add_argument("--threads", type=int)
     _privacy_args(p, remote=False)
     _orientation_args(p)

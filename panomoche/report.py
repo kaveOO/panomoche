@@ -57,8 +57,6 @@ def render_review(
     title: str,
     image_url: ImageUrl,
     upload_url: str | None = None,
-    labels: dict[str, str] | None = None,
-    labels_url: str | None = None,
 ) -> str:
     pictures = []
     for p in predictions:
@@ -74,8 +72,6 @@ def render_review(
         "pictures": pictures,
         "sequences": sequence_summary(predictions),
         "upload_url": upload_url,
-        "labels": labels or {},
-        "labels_url": labels_url,
     }
     return (
         template("review.html").replace("__TITLE__", title.replace("<", "&lt;")).replace("__DATA__", script_json(data))

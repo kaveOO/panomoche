@@ -19,13 +19,13 @@ Everything runs on CPU, locally; nothing is written to Panoramax unless asked ex
 
 ```mermaid
 flowchart LR
-    reviewer["<b>Reviewer</b><br/>[Person]<br/>Reviews verdicts, labels<br/>pictures, tests uploads"]
+    reviewer["<b>Reviewer</b><br/>[Person]<br/>Reviews verdicts,<br/>tests uploads"]
     operator["<b>Operator</b><br/>[Person]<br/>Runs batches:<br/>fetch, predict, tag"]
     panomoche["<b>panomoche</b><br/>[Software system]<br/>Measures street-level pictures and<br/>sorts them as kept or excluded,<br/>with a reason"]
     panoramax["<b>Panoramax instances</b><br/>[External system]<br/>STAC API, picture files,<br/>semantics tags, reports"]
     sgblur["<b>SGBlur</b><br/>[External system]<br/>Face and plate blurring<br/>on upload"]
     hubs["<b>Model sources</b><br/>[External system]<br/>Hugging Face, timm, pyiqa"]
-    reviewer -- "Reviews, labels, uploads<br/>[browser, HTTP]" --> panomoche
+    reviewer -- "Reviews, uploads<br/>[browser, HTTP]" --> panomoche
     operator -- "fetch, predict, tag<br/>[CLI]" --> panomoche
     panomoche -- "Searches and downloads pictures;<br/>writes tags (dry run unless --apply)<br/>[HTTPS, STAC]" --> panoramax
     panoramax -- "Sends each upload;<br/>gets it back blurred,<br/>with a record" --> sgblur
@@ -53,9 +53,9 @@ flowchart TB
         direction TB
         pages["<b>Pages</b><br/>[Container: HTML, CSS, JavaScript]<br/>Upload page, review page"]
         cli["<b>Command line</b><br/>[Container: Python]<br/>fetch, predict, tag, serve;<br/>merged tools: waviness, ads"]
-        web["<b>Web app and HTTP API</b><br/>[Container: FastAPI, Uvicorn]<br/>/predict, /api/sequence, /api/labels"]
+        web["<b>Web app and HTTP API</b><br/>[Container: FastAPI, Uvicorn]<br/>/predict, /api/sequence"]
         engine["<b>Judging engine</b><br/>[Container: PyTorch, OpenCV, ONNX Runtime]<br/>Measures every picture,<br/>applies the one decision"]
-        data[("<b>Datasets and labels</b><br/>[JSONL, JPEG, JSON]<br/>pictures, predictions,<br/>user_labels.json")]
+        data[("<b>Datasets</b><br/>[JSONL, JPEG]<br/>pictures, predictions")]
         models[("<b>Model files</b><br/>[PyTorch, ONNX, joblib]<br/>TOPIQ, DINOv3, SigLIP 2,<br/>orientation classifier")]
     end
     reviewer -- "Uses [browser]" --> pages
@@ -66,7 +66,7 @@ flowchart TB
     cli -- "Measures and decides" --> engine
     cli -- "Searches, downloads, tags<br/>[HTTPS]" --> panoramax
     cli -- "Reads, writes" --> data
-    web -- "Reads predictions,<br/>writes labels" --> data
+    web -- "Reads predictions" --> data
     engine -- "Loads" --> models
     classDef person fill:#08427b,stroke:#052e56,color:#fff
     classDef system fill:#1168bd,stroke:#0b4884,color:#fff
@@ -95,7 +95,7 @@ flowchart TB
         advertising["<b>advertising</b><br/>SigLIP 2 +<br/>Tesseract OCR"]
         waviness["<b>waviness</b><br/>edge bending<br/>(OpenCV)"]
         iqa["<b>iqa / scoring</b><br/>TOPIQ-NR<br/>(pyiqa, PyTorch)"]
-        decision["<b>decision</b> [Python]<br/>one set of rules, with the sequence neighbours and reviewer labels"]
+        decision["<b>decision</b> [Python]<br/>one set of rules, with the sequence neighbours"]
     end
     verdict["<b>Excluded</b> with one reason, or <b>kept</b>"]
     picture --> imaging
@@ -143,7 +143,6 @@ A picture is excluded, with the first reason that applies; otherwise it is kept.
 
 | Reason | Rule |
 |---|---|
-| `labelled_blurred` / `labelled_excluded` | marked by a reviewer on the review page |
 | `low_resolution` | under 15 px per degree |
 | `advertisement` | layout, text area and commercial wording all point to an advertising graphic |
 | `privacy_blur` | SGBlur's blurred boxes cover more than 5% of the picture |
@@ -165,7 +164,6 @@ Served by `panomoche serve` on `127.0.0.1:8000`.
 | `GET /api/info` | | model, thresholds, which checks are on, number of predictions |
 | `POST /predict` | multipart `picture`; optional `is_pano`, `sgblur` (SGBlur's `x-sgblur` header), `tag_key` | verdict (`excluded` reason or null), every measurement, Panoramax semantics tags |
 | `POST /api/sequence` | JSON `{"pictures": [measured pictures, in order]}` | each picture re-decided as one sequence |
-| `POST /api/labels` | JSON `{"id", "label": "blurred" \| "ok" \| null}` | saved label and label counts |
 
 The merged tools keep their own small servers (`panomoche waviness-ui`, `panomoche ads-ui`) with
 `POST /api/analyze`, `POST /api/export` and `GET /api/health`.
@@ -186,7 +184,6 @@ The merged tools keep their own small servers (`panomoche waviness-ui`, `panomoc
 |---|---|
 | `data/<set>/` + `meta.jsonl` | downloaded pictures and their Panoramax metadata (`fetch`) |
 | `data/<set>.jsonl` | one prediction per picture: measurements, `excluded`, `context` (`predict`) |
-| `data/user_labels.json` | reviewer labels, id → `blurred` / `ok` / `exclude` |
 | `models/` | `orientation.joblib`, `siglip2/` (TOPIQ and DINOv3 weights are cached by pyiqa and timm) |
 
 ## Quality and limits

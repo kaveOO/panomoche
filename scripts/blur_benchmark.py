@@ -5,7 +5,7 @@
    JPEG-encoded like Panoramax files, and measured as the pipeline does.
 2. Each alternative measure gets the threshold that flags as many untouched pictures as the rule
    does, so methods are compared on blurred copies at the same false-alarm rate.
-3. Reviewer labels and speed.
+3. Speed.
 
     python scripts/blur_benchmark.py --n 200      # writes reports/blur_benchmark.{json,md}
 """
@@ -135,15 +135,6 @@ def main():
         table.append(line)
     speed = {k: round(1000 * float(np.median(v)), 1) for k, v in timing.items() if v}
 
-    # Reviewer labels on the first dataset (pictures the reviewer marked Blurred or OK).
-    labels = json.loads(Path("data/user_labels.json").read_text())
-    old = {r["id"]: r for r in read_jsonl(Path("data/all.jsonl"))}
-    lab_blur = [old[i] for i, v in labels.items() if v == "blurred" and i in old]
-    lab_rule = sum(is_not_sharp(x["blurred_area"], 0.33, x.get("cpbd")) for x in lab_blur)
-    lab_any = sum(
-        bool(x.get("rules_excluded", x["excluded"])) and x["excluded"] != "labelled_blurred" for x in lab_blur
-    )
-
     out = {
         "pictures": len(sample),
         "panoramas": sum(r["is_pano"] for r in sample),
@@ -152,11 +143,6 @@ def main():
         "thresholds": thresholds,
         "detection": table,
         "median_ms": speed,
-        "labels": {
-            "blurred": len(lab_blur),
-            "caught_by_blur_rule": int(lab_rule),
-            "excluded_by_any_rule": int(lab_any),
-        },
     }
     Path("reports/blur_benchmark.json").write_text(json.dumps(out, indent=1))
     cols = ["rule"] + list(scores)
@@ -172,9 +158,6 @@ def main():
     md += [
         "",
         "Median time per picture: " + ", ".join(f"{k} {v} ms" for k, v in speed.items()),
-        "",
-        f"Reviewer labels: {len(lab_blur)} pictures marked Blurred; blur rule catches {lab_rule}, "
-        f"any rule excludes {lab_any}.",
     ]
     Path("reports/blur_benchmark.md").write_text("\n".join(md) + "\n")
     print("\n".join(md))

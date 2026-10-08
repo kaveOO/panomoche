@@ -1,7 +1,7 @@
 """Keep a dataset free of repeats: pictures already seen, and duplicate or near-identical images.
 
-* Known pictures: every id already in a predictions/metadata file or in the reviewer's labels is
-  skipped when fetching, so a new sample never brings back a picture already judged.
+* Known pictures: every id already in a predictions/metadata file is skipped
+  when fetching, so a new sample never brings back a picture already judged.
 * Duplicates: the same file (SHA-1), or near-identical content (difference hash, 64 bits, at most
   ``MAX_DISTANCE`` bits apart), e.g. a camera that kept shooting while stopped at a red light,
   or the same picture uploaded twice. The first one met is kept.
@@ -20,17 +20,14 @@ MAX_DISTANCE = 6  # of 64 bits; consecutive frames of a moving camera differ by 
 
 
 def known_ids(paths) -> set[str]:
-    """Picture ids listed in JSONL files (``{"id": ...}`` per line) or in a labels JSON (id -> label)."""
+    """Picture ids listed in JSONL files (``{"id": ...}`` per line)."""
     ids: set[str] = set()
     for path in map(Path, paths):
         if not path.is_file():
             continue
-        if path.suffix == ".json":
-            ids.update(json.loads(path.read_text()))
-        else:
-            for line in path.read_text().splitlines():
-                if line.strip():
-                    ids.add(json.loads(line)["id"])
+        for line in path.read_text().splitlines():
+            if line.strip():
+                ids.add(json.loads(line)["id"])
     return ids
 
 
