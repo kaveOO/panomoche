@@ -1,0 +1,233 @@
+{
+  "version": "0.4.0",
+  "policy_version": "2.1",
+  "tests": 40,
+  "tests_passed": 40,
+  "threshold": 90,
+  "ambiguous_action": "accept",
+  "scope": "obvious_advertisements_only",
+  "waviness_files_unchanged": true,
+  "waviness_files_checked": 28,
+  "examples": [
+    {
+      "filename": "advertisement-panorama.png",
+      "decision": "reject",
+      "ad_score": 98.2,
+      "score_components": {
+        "visual_layout": 91.0,
+        "text_layout": 92.4,
+        "commercial_text": 100.0
+      },
+      "reason_code": "obvious_advertisement"
+    },
+    {
+      "filename": "advertisement-resort.png",
+      "decision": "reject",
+      "ad_score": 100.0,
+      "score_components": {
+        "visual_layout": 99.8,
+        "text_layout": 100.0,
+        "commercial_text": 100.0
+      },
+      "reason_code": "obvious_advertisement"
+    },
+    {
+      "filename": "advertisement-restaurant.png",
+      "decision": "reject",
+      "ad_score": 99.7,
+      "score_components": {
+        "visual_layout": 98.2,
+        "text_layout": 100.0,
+        "commercial_text": 100.0
+      },
+      "reason_code": "obvious_advertisement"
+    },
+    {
+      "filename": "advertisement-with-ice.png",
+      "decision": "reject",
+      "ad_score": 98.6,
+      "score_components": {
+        "visual_layout": 93.2,
+        "text_layout": 84.9,
+        "commercial_text": 100.0
+      },
+      "reason_code": "obvious_advertisement"
+    },
+    {
+      "filename": "advertisement-with-statue.png",
+      "decision": "reject",
+      "ad_score": 97.4,
+      "score_components": {
+        "visual_layout": 88.0,
+        "text_layout": 83.0,
+        "commercial_text": 100.0
+      },
+      "reason_code": "obvious_advertisement"
+    },
+    {
+      "filename": "advertisement-with-street.png",
+      "decision": "reject",
+      "ad_score": 94.3,
+      "score_components": {
+        "visual_layout": 68.3,
+        "text_layout": 100.0,
+        "commercial_text": 100.0
+      },
+      "reason_code": "obvious_advertisement"
+    },
+    {
+      "filename": "advertisement.png",
+      "decision": "reject",
+      "ad_score": 95.8,
+      "score_components": {
+        "visual_layout": 82.8,
+        "text_layout": 70.2,
+        "commercial_text": 100.0
+      },
+      "reason_code": "obvious_advertisement"
+    },
+    {
+      "filename": "animals.png",
+      "decision": "accept",
+      "ad_score": 2.1,
+      "score_components": {
+        "visual_layout": 0.8,
+        "text_layout": 2.4,
+        "commercial_text": 0.0
+      },
+      "reason_code": "no_obvious_advertisement"
+    },
+    {
+      "filename": "blank.png",
+      "decision": "accept",
+      "ad_score": 24.2,
+      "score_components": {
+        "visual_layout": 24.2,
+        "text_layout": 0.0,
+        "commercial_text": 0.0
+      },
+      "reason_code": "no_obvious_advertisement"
+    },
+    {
+      "filename": "document.png",
+      "decision": "accept",
+      "ad_score": 66.1,
+      "score_components": {
+        "visual_layout": 24.8,
+        "text_layout": 100.0,
+        "commercial_text": 0.0
+      },
+      "reason_code": "no_obvious_advertisement"
+    },
+    {
+      "filename": "ice-landscape.jpg",
+      "decision": "accept",
+      "ad_score": 2.8,
+      "score_components": {
+        "visual_layout": 0.6,
+        "text_layout": 3.9,
+        "commercial_text": 0.0
+      },
+      "reason_code": "no_obvious_advertisement"
+    },
+    {
+      "filename": "landscape.jpg",
+      "decision": "accept",
+      "ad_score": 12.8,
+      "score_components": {
+        "visual_layout": 9.7,
+        "text_layout": 6.2,
+        "commercial_text": 0.0
+      },
+      "reason_code": "no_obvious_advertisement"
+    },
+    {
+      "filename": "logo.png",
+      "decision": "accept",
+      "ad_score": 52.1,
+      "score_components": {
+        "visual_layout": 39.2,
+        "text_layout": 38.6,
+        "commercial_text": 0.0
+      },
+      "reason_code": "no_obvious_advertisement"
+    },
+    {
+      "filename": "park-statue.jpg",
+      "decision": "accept",
+      "ad_score": 7.3,
+      "score_components": {
+        "visual_layout": 3.7,
+        "text_layout": 6.9,
+        "commercial_text": 0.0
+      },
+      "reason_code": "no_obvious_advertisement"
+    },
+    {
+      "filename": "portrait.jpg",
+      "decision": "accept",
+      "ad_score": 10.9,
+      "score_components": {
+        "visual_layout": 5.3,
+        "text_layout": 10.8,
+        "commercial_text": 0.0
+      },
+      "reason_code": "no_obvious_advertisement"
+    },
+    {
+      "filename": "screenshot.jpg",
+      "decision": "accept",
+      "ad_score": 26.1,
+      "score_components": {
+        "visual_layout": 15.4,
+        "text_layout": 23.1,
+        "commercial_text": 0.0
+      },
+      "reason_code": "no_obvious_advertisement"
+    },
+    {
+      "filename": "street-wavy.png",
+      "decision": "accept",
+      "ad_score": 3.9,
+      "score_components": {
+        "visual_layout": 1.2,
+        "text_layout": 5.0,
+        "commercial_text": 0.0
+      },
+      "reason_code": "no_obvious_advertisement"
+    },
+    {
+      "filename": "street-with-sign.jpg",
+      "decision": "accept",
+      "ad_score": 34.5,
+      "score_components": {
+        "visual_layout": 16.2,
+        "text_layout": 39.9,
+        "commercial_text": 0.0
+      },
+      "reason_code": "no_obvious_advertisement"
+    },
+    {
+      "filename": "street.jpg",
+      "decision": "accept",
+      "ad_score": 24.8,
+      "score_components": {
+        "visual_layout": 5.9,
+        "text_layout": 36.5,
+        "commercial_text": 0.0
+      },
+      "reason_code": "no_obvious_advertisement"
+    }
+  ],
+  "browser_checks": [
+    "all 19 original uploads preserved and reanalyzed: 12 accept, 7 reject",
+    "restaurant advertisement: reject, score 99.7",
+    "resort advertisement: reject, score 100.0",
+    "new interface: both real ads reject, statue / street with sign / cows accept",
+    "three score components visible",
+    "v0.4 JSON export with score components verified",
+    "no browser console errors"
+  ],
+  "accuracy_limit": "Development regressions used to develop this revision; not held-out validation or an accuracy benchmark.",
+  "training": "None. SigLIP 2 weights are pretrained and unchanged."
+}

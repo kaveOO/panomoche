@@ -1,0 +1,80 @@
+{
+ "pictures": 200,
+ "panoramas": 45,
+ "cameras": 50,
+ "flag_rate_untouched": 0.035,
+ "thresholds": {
+  "blurred area alone": 0.3093169999999996,
+  "CPBD alone": -0.11457250000000002,
+  "Laplacian variance": -4.276962821483612,
+  "TOPIQ": -0.4767740000000001
+ },
+ "detection": [
+  {
+   "blur": "original",
+   "rule": 0.035,
+   "blurred area alone": 0.035,
+   "CPBD alone": 0.035,
+   "Laplacian variance": 0.035,
+   "TOPIQ": 0.035
+  },
+  {
+   "blur": "gaussian \u03c3 0.75 px",
+   "rule": 0.505,
+   "blurred area alone": 0.335,
+   "CPBD alone": 0.855,
+   "Laplacian variance": 0.315,
+   "TOPIQ": 0.135
+  },
+  {
+   "blur": "gaussian \u03c3 1.5 px",
+   "rule": 1.0,
+   "blurred area alone": 1.0,
+   "CPBD alone": 1.0,
+   "Laplacian variance": 0.995,
+   "TOPIQ": 0.36
+  },
+  {
+   "blur": "gaussian \u03c3 3 px",
+   "rule": 1.0,
+   "blurred area alone": 1.0,
+   "CPBD alone": 1.0,
+   "Laplacian variance": 1.0,
+   "TOPIQ": 0.95
+  },
+  {
+   "blur": "motion 5 px",
+   "rule": 0.555,
+   "blurred area alone": 0.485,
+   "CPBD alone": 0.74,
+   "Laplacian variance": 0.365,
+   "TOPIQ": 0.275
+  },
+  {
+   "blur": "motion 11 px",
+   "rule": 0.745,
+   "blurred area alone": 0.64,
+   "CPBD alone": 0.87,
+   "Laplacian variance": 0.775,
+   "TOPIQ": 0.85
+  },
+  {
+   "blur": "motion 21 px",
+   "rule": 0.73,
+   "blurred area alone": 0.645,
+   "CPBD alone": 0.945,
+   "Laplacian variance": 0.91,
+   "TOPIQ": 1.0
+  }
+ ],
+ "median_ms": {
+  "blur rule (area + CPBD)": 23.4,
+  "Laplacian variance": 1.8,
+  "TOPIQ": 221.9
+ },
+ "labels": {
+  "blurred": 34,
+  "caught_by_blur_rule": 1,
+  "excluded_by_any_rule": 1
+ }
+}

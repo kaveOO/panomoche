@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Picture quality test</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #f5f5f3; --surface: #ffffff; --surface-2: #efefec; --text: #1c1c1a; --muted: #6a6a64;
+  --border: #e0e0db; --accent: #2d5bd7; --accent-bg: #e8eefc; --bad: #c2410c; --bad-bg: #fbe9df;
+  --ok: #15803d; --ok-bg: #e3f3e8; --shadow: 0 1px 2px rgb(0 0 0 / 6%);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #151514; --surface: #1f1f1d; --surface-2: #2a2a27; --text: #ecece8; --muted: #9b9b94;
+    --border: #34342f; --accent: #8aa8ff; --accent-bg: #1d2640; --bad: #fb923c; --bad-bg: #3a2416;
+    --ok: #4ade80; --ok-bg: #16301f; --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px 48px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-bottom: 14px; }
+h1 { font-size: 20px; margin: 0; font-weight: 650; }
+.info { color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 6px 12px; }
+.info code { background: var(--surface-2); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
+.info a { color: var(--accent); }
+.drop { display: block; border: 2px dashed var(--border); border-radius: 12px; background: var(--surface); padding: 28px 16px;
+  text-align: center; cursor: pointer; transition: border-color .15s, background .15s; }
+.drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-bg); }
+.drop strong { display: block; font-size: 16px; margin-bottom: 4px; }
+.drop span { color: var(--muted); }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.options { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 10px 0 4px; color: var(--muted); font-size: 13px; }
+select { font: inherit; padding: 3px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.hint { color: var(--muted); font-size: 13px; margin: 6px 0 18px; }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; box-shadow: var(--shadow); }
+.panel h2 { font-size: 15px; margin: 0 0 4px; }
+.panel p { margin: 0; color: var(--muted); }
+.results { display: grid; gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow);
+  display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); overflow: hidden; }
+.card.excluded { border-color: color-mix(in srgb, var(--bad) 55%, var(--border)); }
+.pic { position: relative; background: var(--surface-2); align-self: start; }
+.pic img { display: block; width: 100%; height: auto; }
+.views { position: absolute; left: 0; right: 0; top: 25%; height: 50%; display: grid; grid-template-columns: repeat(4, 1fr); pointer-events: none; }
+.views div { border: 1px solid rgb(255 255 255 / 55%); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; }
+.views div.worst { border: 2px solid #fb923c; }
+.views span { background: rgb(0 0 0 / 65%); color: #fff; font-size: 12px; padding: 1px 6px; border-radius: 4px; font-variant-numeric: tabular-nums; }
+.blurbox { position: absolute; border: 2px solid #e879f9; box-shadow: 0 0 0 1px rgb(0 0 0 / 50%); pointer-events: none; }
+.verdict.muted { background: var(--surface-2); color: var(--muted); }
+.body { padding: 12px 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.name { font-weight: 600; overflow-wrap: anywhere; }
+.status { color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 8px; }
+.spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.verdict { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; padding: 3px 10px; border-radius: 999px; width: fit-content; }
+.verdict.ok { background: var(--ok-bg); color: var(--ok); }
+.verdict.bad { background: var(--bad-bg); color: var(--bad); }
+.big { display: flex; align-items: baseline; gap: 8px; font-variant-numeric: tabular-nums; }
+.big b { font-size: 28px; line-height: 1; }
+.big span { color: var(--muted); font-size: 13px; }
+.meter { position: relative; height: 8px; border-radius: 4px; background: var(--surface-2); }
+.meter i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--ok); }
+.excluded .meter i { background: var(--bad); }
+.meter u { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--text); opacity: .55; text-decoration: none; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; overflow-wrap: anywhere; }
+.tag { display: inline-block; padding: 1px 7px; margin: 0 4px 2px 0; border-radius: 5px; font-size: 12px; background: var(--bad-bg); color: var(--bad); }
+details summary { cursor: pointer; color: var(--accent); font-size: 13px; }
+pre { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; font-size: 12px; overflow-x: auto; margin: 6px 0 0; }
+.error { color: var(--bad); }
+@media (max-width: 720px) { .card { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Picture quality test</h1>
+    <div class="info" id="info"></div>
+  </header>
+
+  <label class="drop" id="drop">
+    <input type="file" id="files" accept="image/*" multiple>
+    <strong>Drop pictures here, or click to choose</strong>
+    <span>JPEG or PNG, flat or 360° equirectangular. Several files from the same sequence can be dropped together.</span>
+  </label>
+  <div class="options">
+    <label>Projection
+      <select id="mode">
+        <option value="auto">Detect (2:1 picture = 360°)</option>
+        <option value="pano">Force 360°</option>
+        <option value="flat">Force flat</option>
+      </select>
+    </label>
+  </div>
+  <p class="hint" id="hint"></p>
+
+  <div id="seq-panel" class="panel" hidden></div>
+  <div class="results" id="results"></div>
+</div>
+<script id="info-data" type="application/json">__INFO__</script>
+<script>
+const INFO = JSON.parse(document.getElementById("info-data").textContent);
+const THRESHOLD = INFO.thresholds && INFO.thresholds.low_quality;              // 360° pictures
+const THRESHOLD_FLAT = INFO.thresholds && INFO.thresholds.low_quality_flat;   // flat pictures
+const MIN_SEQUENCE = 6;
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const fmt = (x, d = 2) => (x == null ? "–" : Number(x).toFixed(d));
+
+document.getElementById("info").innerHTML =
+  `<span>model <code>${esc(INFO.model)}</code></span>` +
+  (THRESHOLD != null ? `<span>TOPIQ floor <code>${fmt(THRESHOLD_FLAT ?? THRESHOLD)}</code> flat, <code>${fmt(THRESHOLD)}</code> 360°</span>` : "") +
+  (INFO.max_privacy_blur != null ? `<span>max privacy blur <code>${Math.round(INFO.max_privacy_blur * 100)}%</code></span>` : "") +
+  (INFO.max_blurred_area != null && INFO.max_blurred_area < 1 ? `<span>not sharp: blurred area <code>${Math.round(INFO.max_blurred_area * 100)}%</code> with CPBD &lt; <code>${INFO.confirm_cpbd}</code>, or <code>${Math.round(INFO.soft_blurred_area * 100)}%</code> with CPBD &lt; <code>${INFO.soft_cpbd}</code></span>` : "") +
+  (INFO.predictions ? `<a href="review">Review ${INFO.predictions} scored pictures →</a>` : "");
+document.getElementById("hint").textContent =
+  `One picture is judged alone. Drop ${MIN_SEQUENCE} or more pictures of one sequence ` +
+  `to also compare each one with its neighbours, in file-name order.`;
+
+const drop = document.getElementById("drop");
+const input = document.getElementById("files");
+["dragenter", "dragover"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => run(e.dataTransfer.files));
+input.addEventListener("change", () => { run(input.files); input.value = ""; });
+
+let batchId = 0;
+
+async function run(fileList) {
+  const files = [...fileList].filter(f => f.type.startsWith("image/"))
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
+  if (!files.length) return;
+  const batch = ++batchId;
+  const results = document.getElementById("results");
+  results.replaceChildren();
+  const panel = document.getElementById("seq-panel");
+  panel.hidden = files.length < 2;
+  panel.innerHTML = files.length >= MIN_SEQUENCE
+    ? `<h2>Sequence comparison</h2><p>Scoring ${files.length} pictures, then comparing each with its neighbours…</p>`
+    : `<h2>Sequence comparison</h2><p>Needs at least ${MIN_SEQUENCE} pictures of one sequence; ${files.length} dropped. Each picture is still scored on its own.</p>`;
+
+  const items = files.map((file, i) => ({file, id: `upload-${i + 1}`, card: makeCard(file), result: null}));
+  items.forEach(it => results.appendChild(it.card));
+  for (const it of items) {
+    if (batch !== batchId) return;  // a newer drop replaced this one
+    it.result = await score(it);
+  }
+  const done = items.filter(it => it.result);
+  if (batch === batchId && done.length >= MIN_SEQUENCE) await compare(done);
+}
+
+function makeCard(file) {
+  const card = document.createElement("article");
+  card.className = "card";
+  const url = URL.createObjectURL(file);
+  card.innerHTML =
+    `<div class="pic"><img src="${url}" alt=""></div>` +
+    `<div class="body"><div class="name">${esc(file.name)}</div>` +
+    `<div class="status"><span class="spinner"></span>Waiting…</div></div>`;
+  return card;
+}
+
+async function score(it) {
+  const body = it.card.querySelector(".body");
+  body.querySelector(".status").innerHTML = `<span class="spinner"></span>Scoring…`;
+  const fd = new FormData();
+  fd.append("picture", it.file);
+  const mode = document.getElementById("mode").value;
+  if (mode !== "auto") fd.append("is_pano", mode === "pano" ? "true" : "false");
+  try {
+    const res = await fetch("predict", {method: "POST", body: fd});
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+    renderResult(it, data);
+    return data;
+  } catch (err) {
+    body.querySelector(".status").innerHTML = `<span class="error">Failed: ${esc(err.message)}</span>`;
+    return null;
+  }
+}
+
+function privacyText(r) {
+  if (r.privacy_record === "sgblur")
+    return `${(100 * r.privacy_blur).toFixed(1)}% of the scored area (${r.privacy_patches} faces/plates)`;
+  if (r.privacy_record === "none") return "none";
+  return "unknown: only original Panoramax files (the hd download) carry SGBlur's record";
+}
+
+function drawBlurBoxes(pic, boxes) {
+  pic.querySelectorAll(".blurbox").forEach(b => b.remove());
+  (boxes || []).forEach(([x0, y0, x1, y1]) => {
+    const b = document.createElement("div");
+    b.className = "blurbox";
+    Object.assign(b.style, {left: `${x0 * 100}%`, top: `${y0 * 100}%`, width: `${(x1 - x0) * 100}%`, height: `${(y1 - y0) * 100}%`});
+    pic.appendChild(b);
+  });
+}
+
+const EXCLUSION_TEXT = {not_sharp: "not sharp enough", privacy_blur: "too much privacy blur",
+  gps_inaccurate: "GPS position too inaccurate", low_resolution: "resolution too low",
+  wrong_orientation: "picture is the wrong way up", low_quality: "low image quality",
+  sequence_outlier: "clearly worse than the pictures around it", wavy: "wavy (rolling-shutter wobble)",
+  advertisement: "advertisement"};
+// Exclusions decided before looking at image quality: shown without the TOPIQ score card.
+const HARD = new Set(["not_sharp", "privacy_blur", "gps_inaccurate", "low_resolution", "wrong_orientation", "wavy", "advertisement"]);
+const REASON_HINT = {not_sharp: "the picture has too little fine detail (blur, motion, haze).",
+  privacy_blur: "too much of the scene is hidden by Panoramax's face and plate blurring.",
+  wrong_orientation: "the content is upside down or sideways.",
+  gps_inaccurate: "its position is too inaccurate to be useful.", low_resolution: "too few pixels per degree.",
+  wavy: "straight edges bend together, as do its neighbours': the camera mount wobbled (rolling shutter).",
+  advertisement: "an advertising graphic (layout and promotional wording), not a street-level picture."};
+function contentText(r) {
+  const bits = [];
+  if (r.waviness_label) bits.push(`waviness ${fmt(r.waviness_score, 1)}/100 (${r.waviness_label.replace(/_/g, " ")})`);
+  else if (r.is_pano && INFO.waviness_check) bits.push("waviness not checked on 360°");
+  if (r.ad_rejected) bits.push("advertisement");
+  else if (r.ad_checked === false) bits.push(r.ad_reason === "check_unavailable"
+    ? "advertisement check unavailable (no model)" : "advertisement check incomplete (OCR missing?): passed");
+  else if (r.ad_rejected != null) bits.push("no obvious advertisement");
+  return bits.join(" · ");
+}
+
+function renderExcluded(it, r) {
+  const body = it.card.querySelector(".body");
+  const blur = r.excluded === "not_sharp";
+  body.innerHTML =
+    `<div class="name">${esc(it.file.name)}</div>` +
+    `<span class="verdict muted">Excluded: ${esc(EXCLUSION_TEXT[r.excluded] || r.excluded)}</span>` +
+    `<dl class="kv">` +
+      (contentText(r) ? `<dt>Content</dt><dd>${esc(contentText(r))}</dd>` : "") +
+      (r.excluded === "wrong_orientation" ? `<dt>Orientation</dt><dd>looks rotated ${r.orientation}° ` +
+        `(${Math.round(100 * r.orientation_confidence)}% confident)</dd>` : "") +
+      `<dt>TOPIQ</dt><dd>${fmt(r.quality_score)}</dd>` +
+      (blur ? `<dt>Blurred area</dt><dd>${Math.round(100 * r.blurred_area)}% of the textured area` + (r.cpbd != null ? `, sharp edges ${Math.round(100 * r.cpbd)}% (CPBD)` : "") + `</dd>` : "") +
+      `<dt>Privacy blur</dt><dd>${esc(privacyText(r))}` +
+        (r.excluded === "privacy_blur" ? `, above the ${Math.round(INFO.max_privacy_blur * 100)}% limit` : "") + `</dd>` +
+      `<dt>Picture</dt><dd>${r.is_pano ? "360°" : "flat"} · ${r.width}×${r.height}</dd>` +
+    `</dl><p class="hint" style="margin:0">${esc(REASON_HINT[r.excluded] || "")}</p>`;
+  drawBlurBoxes(it.card.querySelector(".pic"), r.privacy_boxes);
+}
+
+function renderResult(it, r) {
+  if (r.excluded && HARD.has(r.excluded)) return renderExcluded(it, r);
+  const card = it.card;
+  card.classList.toggle("excluded", !!r.excluded);
+  const body = card.querySelector(".body");
+  const pct = Math.max(0, Math.min(1, r.quality_score)) * 100;
+  const t = r.is_pano ? THRESHOLD : (THRESHOLD_FLAT ?? THRESHOLD);
+  const marker = t != null ? `<u style="left:calc(${t * 100}% - 1px)" title="threshold ${fmt(t)}"></u>` : "";
+  const issues = r.issues.length ? r.issues.map(i => `<span class="tag">${esc(i.replace(/_/g, " "))}</span>`).join("") : "none";
+  const scores = Object.entries(r.scores || {}).map(([k, v]) => `${esc(k)} ${fmt(v)}`).join(" · ");
+  body.innerHTML =
+    `<div class="name">${esc(it.file.name)}</div>` +
+    `<span class="verdict ${r.excluded ? "bad" : "ok"}">${r.excluded ? "Excluded: " + esc(EXCLUSION_TEXT[r.excluded] || r.excluded) : "Kept"}</span>` +
+    `<div class="big"><b>${fmt(r.quality_score)}</b><span>TOPIQ score of the worst view, 0 to 1</span></div>` +
+    `<div class="meter"><i style="width:${pct}%"></i>${marker}</div>` +
+    `<dl class="kv">` +
+      `<dt>Issues</dt><dd class="issues">${issues}</dd>` +
+      `<dt>Scores</dt><dd>${scores}</dd>` +
+      `<dt>Picture</dt><dd>${r.is_pano ? "360°, scored on 4 horizon views" : "flat"} · ${r.width}×${r.height}</dd>` +
+      `<dt>Privacy blur</dt><dd>${esc(privacyText(r))}</dd>` +
+      (contentText(r) ? `<dt>Content</dt><dd>${esc(contentText(r))}</dd>` : "") +
+      (r.blurred_area != null ? `<dt>Blurred area</dt><dd>${Math.round(100 * r.blurred_area)}% of the textured area` + (r.cpbd != null ? `, sharp edges ${Math.round(100 * r.cpbd)}% (CPBD)` : "") + `</dd>` : "") +
+      `<dt>Time</dt><dd>${(r.elapsed_ms / 1000).toFixed(1)} s</dd>` +
+      `<dt class="seq-k" hidden>Sequence</dt><dd class="seq-v" hidden></dd>` +
+    `</dl>` +
+    `<details><summary>Panoramax tags that <code>tag --apply</code> would write</summary><pre class="sem">${esc(JSON.stringify(r.semantics, null, 2))}</pre></details>`;
+  const pic = card.querySelector(".pic");
+  pic.querySelector(".views")?.remove();
+  if (r.is_pano && Array.isArray(r.view_scores) && r.view_scores.length === 4) {
+    const worst = Math.min(...r.view_scores);
+    const v = document.createElement("div");
+    v.className = "views";
+    v.innerHTML = r.view_scores.map(s => `<div class="${s === worst ? "worst" : ""}"><span>${fmt(s)}</span></div>`).join("");
+    pic.appendChild(v);
+  }
+  drawBlurBoxes(pic, r.privacy_boxes);
+}
+
+async function compare(items) {
+  const panel = document.getElementById("seq-panel");
+  const res = await fetch("api/sequence", {method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({pictures: items.map(it => ({...it.result, id: it.id}))})});
+  if (!res.ok) { panel.innerHTML = `<h2>Sequence comparison</h2><p class="error">Failed (HTTP ${res.status}).</p>`; return; }
+  const data = await res.json();
+  const byId = Object.fromEntries(data.pictures.map(p => [p.id, p]));
+  let outliers = 0;
+  items.forEach(it => {
+    const p = byId[it.id];
+    if (!p) return;
+    const isOutlier = p.excluded === "sequence_outlier";
+    outliers += isOutlier;
+    it.result = {...it.result, issues: p.issues, low_quality: p.low_quality, excluded: p.excluded};
+    renderResult(it, it.result);
+    if (p.excluded && HARD.has(p.excluded)) return;
+    it.card.querySelector(".seq-k").hidden = false;
+    const v = it.card.querySelector(".seq-v");
+    v.hidden = false;
+    v.textContent = p.context
+      ? `neighbours' median TOPIQ ${fmt(p.context.topiq_median)}, blurred area ${Math.round(100 * (p.context.blurred_median || 0))}% ` +
+        `(${p.context.neighbours} neighbours)` + (isOutlier ? " → worse than its neighbours" : "")
+      : "not enough neighbours, judged alone";
+  });
+  const s = data.summary;
+  panel.innerHTML = `<h2>Sequence comparison</h2><p>${items.length} pictures compared in file-name order` +
+    (s ? `, median score ${fmt(s.median)}` : "") + `: <b>${outliers}</b> clearly worse than ${outliers === 1 ? "its" : "their"} neighbours. ` +
+    `A picture is excluded when its TOPIQ is ${fmt(data.params.drop)} below its neighbours' median.</p>`;
+}
+</script>
+</body>
+</html>

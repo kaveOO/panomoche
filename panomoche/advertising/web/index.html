@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Advertisement Check</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body>
+<header class="topbar"><a href="/" class="brand" aria-label="Advertisement Check home"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m3 8 8-3 10 3 8-3v21l-8 3-10-3-8 3V8Zm8-3v21M21 8v21"/></svg><span>Advertisement Check</span></a><span class="local-badge"><i></i><span id="model-state">Checking local model…</span></span></header>
+<main>
+<section class="intro"><p class="eyebrow">MAP IMAGERY / LIGHT CONTENT FILTER</p><h1>Catch obvious advertising.</h1><p>Pass images by default.<br>Reject only clear advertising graphics with supporting visual and text evidence.</p></section>
+<div class="workspace">
+<aside>
+ <section class="panel upload-panel"><h2>Your images</h2>
+ <label class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose images to check"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 21V5m-6 6 6-6 6 6M6 22v5h20v-5"/></svg><strong>Drop images here</strong><span>or click to browse</span><small>PNG, JPG, WebP, BMP, TIFF · up to 20 MB each</small><input id="files" type="file" accept="image/png,image/jpeg,image/webp,image/bmp,image/tiff" multiple></label>
+ <button id="examples" class="secondary wide">Try the reference images <span>↗</span></button>
+ <div class="queue-head"><span id="count">0 images</span><button id="clear" class="text-button" disabled>Clear</button></div><div id="queue" class="queue" aria-label="Content results"></div>
+ <button id="download-batch" class="secondary wide" hidden style="margin-top:12px">Export batch JSON ↓</button>
+ </section>
+ <section class="panel settings-panel"><div class="section-title"><h2>Rejection settings</h2><button id="reset" class="text-button">Reset</button></div>
+ <label for="threshold">Minimum advertising evidence <output id="threshold-value">90 / 100</output></label><input id="threshold" type="range" min="90" max="99" step="1" value="90"><p>Higher values require stronger advertising evidence and reject fewer images. Visual layout and supporting text must agree. Missing keywords never force the score to zero.</p>
+ <div class="policy-note"><strong>Uncertain → accept</strong><span>Only obvious advertisements are rejected. No review queue.</span></div>
+ <button id="reanalyze" class="primary wide" disabled>Check with these settings</button><p class="settings-note" id="settings-note">Settings are recorded with each result.</p>
+ </section>
+ <details class="method panel"><summary>What does this check reject?</summary><p>Clear commercial flyers and posters. Scores combine advertising layout, text coverage and commercial wording such as prices, offers or booking details.</p><p>Landscapes, statues, animals, portraits, interiors, screenshots, documents and logos pass this check unless there is clear advertising evidence.</p><p>Shop signs and billboards can appear in real photos. Text, a logo or a single “sale” sign alone does not reject an image.</p><p>Passing means no obvious advertisement was detected. Location, permissions and image quality belong to separate checks.</p></details>
+</aside>
+<section class="main-panel">
+ <div id="empty" class="empty-state"><div class="empty-art"><svg viewBox="0 0 340 210" aria-hidden="true"><rect x="37" y="20" width="260" height="165" rx="7"/><path class="muted-line" d="m54 155 69-81 60 72 38-39 60 49M61 166h219"/><circle cx="237" cy="62" r="16" style="fill:none;stroke:#7d927c"/></svg></div><h2>A lighter check for advertising.</h2><p>Upload an image or try the reference set.<br>See the decision, advertising evidence and the reason.</p><div class="empty-tags"><span>Runs locally</span><span>Accept or reject</span><span>JSON reports</span></div></div>
+ <div id="result" hidden>
+  <div class="result-head"><div><p class="eyebrow" id="filename"></p><h2 id="result-title"></h2><p id="explanation"></p></div><div class="score-block"><span id="score"></span><small>AD EVIDENCE / 100</small></div></div>
+  <div class="result-meta"><span id="decision" class="pill"></span><span id="resolution"></span><span id="applied-settings"></span></div>
+  <div class="image-frame"><img id="preview" alt="Image being checked"></div>
+  <div class="metrics"><div><strong id="place-category"></strong><span>Visual advertising layout / 100</span></div><div><strong id="other-category"></strong><span>Text coverage evidence / 100</span></div><div><strong id="time"></strong><span>Commercial wording / 100</span></div></div>
+  <section class="chart-section"><div class="section-title"><div><h3>Layout evidence</h3><p>Image–text similarity. Higher means a closer match.</p></div><button id="download-json" class="secondary">Export JSON ↓</button></div><div id="categories" class="category-list"></div></section>
+  <section class="text-evidence"><h3>Text checks</h3><p id="ocr"></p></section>
+  <p class="footnote">The overall score combines three evidence signals; it is not a probability. Rejection also requires corroborating visual and text evidence. Uncertain images pass. Quality and map relevance are separate checks.</p>
+ </div>
+ <div id="loading" class="loading-overlay" hidden><span class="spinner"></span><strong>Checking the content…</strong><span>Checking for clear advertising</span></div>
+</section>
+</div><div id="status" class="status" aria-live="polite"></div>
+</main></body></html>

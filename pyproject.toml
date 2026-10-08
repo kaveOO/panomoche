@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "panomoche"
+version = "0.1.0"
+description = "Automatic sorting of street-level pictures for Panoramax: keeps clean pictures, excludes unusable ones"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.2",
+    "timm>=1.0.20",  # first release shipping the DINOv3 weights
+    "numpy",
+    "pillow",
+    "opencv-python-headless",
+    "scikit-learn",
+    "joblib",
+    "requests",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+serve = ["fastapi", "uvicorn", "python-multipart"]
+iqa = ["pyiqa", "psutil"]  # off-the-shelf quality models, see panomoche/iqa.py
+ads = ["onnxruntime>=1.20,<2", "tokenizers>=0.21,<1"]  # advertisement check (SigLIP 2); also needs Tesseract OCR
+dev = ["pytest", "httpx", "fastapi", "python-multipart", "ruff", "vulture"]
+
+[project.scripts]
+panomoche = "panomoche.cli:main"
+
+[tool.setuptools.package-data]
+panomoche = ["web/*.html", "waviness/web/*", "advertising/web/*", "advertising/policy.json"]
+
+[tool.setuptools.packages.find]
+include = ["panomoche*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = ["data", "models", "examples", "docs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM115", "RUF059", "RUF100"]
+ignore = [
+    "B008",  # FastAPI's File()/Form()/Body() defaults are the documented idiom
+    "B905",  # zip(strict=...): every zip here pairs sequences built together
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["F811"]  # fixtures imported from another test module are redefined by pytest's argument injection
+# Merged standalone tools: kept close to their upstream code, so that a new release can be merged again.
+"panomoche/waviness/*" = ["E501", "E702"]
+"panomoche/advertising/*" = ["E501", "E702"]
+"tests/test_waviness_tool.py" = ["E501", "E702"]
+"tests/test_advertising_tool.py" = ["E501", "E702"]
+"scripts/iqa_eval.py" = ["E501"]  # embedded minified CSS
+
+[tool.ruff.format]
+exclude = ["panomoche/waviness/*", "panomoche/advertising/*", "tests/test_waviness_tool.py", "tests/test_advertising_tool.py"]

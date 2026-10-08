@@ -1,0 +1,22 @@
+# Python environment and tool caches
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Downloaded pictures, predictions and model weights (fetched or rebuilt locally, see README)
+data/
+models/
+*.jsonl
+test_uploads/
+
+# Generated reports: keep the benchmark summaries, rebuild the rest with the scripts
+reports/*.html
+reports/*.jpg
+reports/*_rows.json
+review*.html
+
+# Archives and Windows download markers
+*.zip
+*:Zone.Identifier

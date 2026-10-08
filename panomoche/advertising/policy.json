@@ -1,0 +1,193 @@
+{
+  "version": "2.1",
+  "scope": "obvious_advertisements_only",
+  "ambiguous_action": "accept",
+  "reference": [
+    {
+      "id": "street",
+      "label": "Street or road",
+      "prompts": [
+        "a street-level photograph of a city street with buildings and a road",
+        "a photograph taken while walking or driving along a public street",
+        "a real street scene with storefronts, signs and vehicles"
+      ]
+    },
+    {
+      "id": "buildings",
+      "label": "Buildings and public places",
+      "prompts": [
+        "an outdoor photograph documenting the exterior of buildings in a town",
+        "a photograph of a public square, a village or a residential neighborhood",
+        "a street-level photograph of architecture and the surrounding public space"
+      ]
+    },
+    {
+      "id": "landscape",
+      "label": "Landscape or countryside",
+      "prompts": [
+        "a photograph of a natural landscape showing mountains, forests or countryside",
+        "a wide outdoor photograph of fields, hills and the surrounding landscape",
+        "a photograph of a rural road or countryside scenery"
+      ]
+    },
+    {
+      "id": "waterfront",
+      "label": "Waterfront or coast",
+      "prompts": [
+        "a photograph of a coastline, a beach or a lake and its surroundings",
+        "a photograph of a river, a harbor or a waterfront landscape",
+        "a wide photograph of natural scenery near water"
+      ]
+    },
+    {
+      "id": "path",
+      "label": "Path or public outdoor space",
+      "prompts": [
+        "a photograph of a hiking trail or a path through a forest",
+        "a photograph of a public park, a sidewalk or an outdoor pedestrian area",
+        "a photograph documenting an outdoor path and the surrounding scenery"
+      ]
+    },
+    {
+      "id": "public_art",
+      "label": "Public monument or outdoor artwork",
+      "prompts": [
+        "a photograph of a statue or public monument in a park",
+        "an outdoor photograph of a stone sculpture surrounded by trees and public space",
+        "a photograph documenting a memorial, fountain or outdoor artwork and its surroundings"
+      ]
+    },
+    {
+      "id": "snow_landscape",
+      "label": "Snow, ice or glacier landscape",
+      "prompts": [
+        "a photograph of a polar landscape with glaciers, icebergs, sea and sky",
+        "a photograph of snow-covered mountains and water in a natural landscape",
+        "a photograph of an icy coastline, frozen lake or glacier landscape"
+      ]
+    },
+    {
+      "id": "screenshot",
+      "label": "Screenshot or screen content",
+      "prompts": [
+        "a screenshot of a website, a computer application or a phone screen",
+        "a screenshot of a video game or a digital map",
+        "an image of a social media post or a computer user interface"
+      ]
+    },
+    {
+      "id": "document",
+      "label": "Document or printed layout",
+      "prompts": [
+        "a scanned document, a printed page or a page of text",
+        "a photograph of a menu, a brochure, a business card or a flyer",
+        "a page containing text, a chart or a diagram"
+      ]
+    },
+    {
+      "id": "logo",
+      "label": "Logo, illustration or meme",
+      "prompts": [
+        "a standalone company logo or a graphic symbol",
+        "a meme, a cartoon, a drawing or a digital illustration",
+        "a digitally rendered image or a decorative graphic design"
+      ]
+    },
+    {
+      "id": "product",
+      "label": "Product or object photograph",
+      "prompts": [
+        "a product catalog photograph of an isolated item for sale",
+        "a close-up photograph of food or a meal",
+        "a close-up photograph of an object with little surrounding location context",
+        "a studio product photograph of a figurine or decorative sculpture on a plain background"
+      ]
+    },
+    {
+      "id": "portrait",
+      "label": "Portrait or selfie",
+      "prompts": [
+        "a portrait photograph or a selfie focused on a person",
+        "a close-up photograph of a person's face",
+        "a personal group photograph focused on people rather than a place"
+      ]
+    },
+    {
+      "id": "animal",
+      "label": "Animals",
+      "prompts": [
+        "a close-up photograph of an animal or a pet",
+        "a photograph focused on a group of cows rather than documenting a landscape",
+        "a wildlife photograph focused on an animal"
+      ]
+    },
+    {
+      "id": "interior",
+      "label": "Indoor scene",
+      "prompts": [
+        "a photograph inside a bedroom, a kitchen or a private home",
+        "a photograph inside a shop or an office",
+        "an indoor photograph with no view of the outdoor surroundings"
+      ]
+    },
+    {
+      "id": "unusable",
+      "label": "Blank image, sky or texture",
+      "prompts": [
+        "a completely blank or dark image",
+        "an abstract texture or a close-up of a surface",
+        "a photograph of the sky alone with no identifiable place"
+      ]
+    },
+    {
+      "id": "scene_signs",
+      "label": "Signs or billboards in a photographed place",
+      "prompts": [
+        "a real photograph of a shop facade with sale signs and advertising in its windows",
+        "a photograph of an outdoor billboard standing beside a road with the surrounding landscape visible",
+        "a street photograph with advertising posters on buildings and public transport"
+      ]
+    }
+  ],
+  "advertising": [
+    {
+      "id": "advertisement",
+      "label": "Advertisement or promotional graphic",
+      "prompts": [
+        "a digitally designed advertisement with promotional text and a product",
+        "a promotional poster, a sale banner or a commercial advertisement",
+        "a travel advertisement with a landscape photograph and promotional text",
+        "a designed promotional poster showing a statue, a monument or a tourist attraction",
+        "a digitally designed travel advertisement with a city street photograph surrounded by promotional text",
+        "a commercial sale flyer with a photograph inset between a headline and a call to action"
+      ]
+    },
+    {
+      "id": "food_advertisement",
+      "label": "Restaurant or food promotional flyer",
+      "prompts": [
+        "an advertising flyer for a restaurant or bar showing food, drink specials and prices",
+        "a designed restaurant promotion with happy hour offers, meal prices and large headlines",
+        "a promotional food and drink poster with a photograph of a meal and commercial offers"
+      ]
+    },
+    {
+      "id": "travel_advertisement",
+      "label": "Travel or accommodation promotional flyer",
+      "prompts": [
+        "a travel or holiday advertisement with a resort photograph, package details and booking information",
+        "a promotional beach resort flyer with large typography, hotel offers and contact details",
+        "a designed vacation advertisement with a landscape photograph, accommodation packages and a book now message"
+      ]
+    },
+    {
+      "id": "retail_advertisement",
+      "label": "Product or service advertising graphic",
+      "prompts": [
+        "a commercial product advertising graphic with brand names, prices and promotional typography",
+        "a designed advertisement for a product or service with a photograph, large headline and contact information",
+        "a sales flyer for a business with product photographs, offers and prices"
+      ]
+    }
+  ]
+}

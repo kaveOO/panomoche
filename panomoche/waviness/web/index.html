@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Waviness Check</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Waviness Check home"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 6C18 8 1 16 14 18S28 25 17 27M15 4C28 6 11 14 24 16S36 23 27 27"/></svg><span>Waviness Check</span></a>
+    <span class="local-badge"><i></i> Runs on your computer</span>
+  </header>
+  <main>
+    <section class="intro">
+      <p class="eyebrow">IMAGE GEOMETRY / 01</p>
+      <h1>Find the bend.</h1>
+      <p>Check whether long edges wobble together.<br>Inspect the evidence, then decide what to keep.</p>
+    </section>
+    <div class="workspace">
+      <aside>
+        <section class="panel upload-panel">
+          <h2>Your images</h2>
+          <label class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose images to analyze">
+            <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 21V5m-6 6 6-6 6 6M6 22v5h20v-5"/></svg>
+            <strong>Drop images here</strong>
+            <span>or click to browse</span>
+            <small>PNG, JPG, WebP, BMP, TIFF · up to 20 MB each</small>
+            <input id="files" type="file" accept="image/png,image/jpeg,image/webp,image/bmp,image/tiff" multiple>
+          </label>
+          <button id="examples" class="secondary wide">Try the four reference images <span>↗</span></button>
+          <div class="queue-head"><span id="count">0 images</span><button id="clear" class="text-button" disabled>Clear</button></div>
+          <div id="queue" class="queue" aria-label="Image results"></div>
+          <button id="download-batch" class="secondary wide" hidden style="margin-top:12px">Export batch JSON ↓</button>
+        </section>
+        <section class="panel settings-panel">
+          <div class="section-title"><h2>Detection settings</h2><button id="reset" class="text-button">Reset</button></div>
+          <label for="threshold">Decision threshold <output id="threshold-value">45 / 100</output></label>
+          <input id="threshold" type="range" min="20" max="90" step="1" value="45">
+          <p>A higher threshold requires a stronger score before flagging.</p>
+          <label for="bending">Minimum bending <output id="bending-value">0.20%</output></label>
+          <input id="bending" type="range" min="0.05" max="1" step="0.05" value="0.20">
+          <p>Sideways deviation as a percentage of image width. Lower values pick up subtler bends.</p>
+          <button id="reanalyze" class="primary wide" disabled>Analyze with these settings</button>
+          <p class="settings-note" id="settings-note">Settings are saved with each result.</p>
+        </section>
+        <details class="method panel"><summary>How it works</summary><p>Canny finds boundaries. The tool traces long, mostly vertical edges and removes normal tilt and simple bowing. It looks for nonlinear bending that agrees across separate parts of the image.</p><p>Scores are heuristic indices, not probabilities. Curved architecture or vegetation can resemble distortion. Sparse scenes can hide it. Validate thresholds on images from your camera.</p><p>Blur is not scored. Missing or broken edges reduce the available evidence.</p></details>
+      </aside>
+      <section class="main-panel">
+        <div id="empty" class="empty-state">
+          <div class="empty-art"><svg viewBox="0 0 340 210" aria-hidden="true"><rect x="37" y="20" width="260" height="165" rx="7"/><path class="muted-line" d="M81 43v120M123 43v120M214 43v120M259 43v120"/><path class="bend-line" d="M169 42c-32 30 32 45 0 74s22 34 0 48"/><path class="axis" d="M54 88h228M54 139h228"/><circle cx="169" cy="116" r="6"/></svg></div>
+          <h2>A straight edge tells a story.</h2>
+          <p>Upload an image or try the examples.<br>The overlay shows exactly where the evidence comes from.</p>
+          <div class="empty-tags"><span>Geometry score</span><span>Edge evidence</span><span>JSON + PNG export</span></div>
+        </div>
+        <div id="result" hidden>
+          <div class="result-head">
+            <div><p class="eyebrow" id="filename"></p><h2 id="result-title"></h2><p id="explanation"></p></div>
+            <div class="score-block"><span id="score"></span><small>WAVINESS / 100</small></div>
+          </div>
+          <div class="result-meta"><span id="confidence" class="pill"></span><span id="resolution"></span><span id="applied-settings"></span></div>
+          <div class="viewer-toolbar"><div class="tabs" role="tablist" aria-label="Image view"><button role="tab" aria-selected="true" data-view="overlay">Evidence</button><button role="tab" aria-selected="false" data-view="original">Original</button><button role="tab" aria-selected="false" data-view="edge_map">Edge map</button></div><button id="download-overlay" class="text-button">Save overlay ↓</button></div>
+          <div class="image-frame"><img id="preview" alt="Image analysis preview"></div>
+          <div id="legend" class="legend"><span><i class="coral"></i> Shared bending</span><span><i class="amber"></i> Other bending</span><span><i class="cyan"></i> Reference edge</span></div>
+          <div class="metrics"><div><strong id="usable"></strong><span>Usable edges</span></div><div><strong id="coverage"></strong><span>Shared edge coverage</span></div><div><strong id="amplitude"></strong><span>Median confirmed bend</span></div></div>
+          <section class="chart-section"><div class="section-title"><div><h3>Bending along image height</h3><p>Deviation from a fitted straight line, in analysis pixels.</p></div><button id="download-json" class="secondary">Export JSON ↓</button></div><div id="chart" class="chart"></div><p class="chart-note">Matching curves may move in opposite directions. The comparison checks shape in overlapping image rows.</p></section>
+          <p class="footnote">Version 0.2 · shared edge coverage measures confirmed bending as a fraction of total usable edge length. Insufficient evidence does not invalidate an image. Calibrate thresholds with representative normal and wavy images.</p>
+        </div>
+        <div id="loading" class="loading-overlay" hidden><span class="spinner"></span><strong>Tracing edges…</strong><span>Checking shared bending</span></div>
+      </section>
+    </div>
+    <div id="status" class="status" aria-live="polite"></div>
+  </main>
+</body>
+</html>
